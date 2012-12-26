@@ -1,0 +1,31 @@
+
+#java specific
+
+*.class
+
+*.pyc
+
+#netbeans ignore personal stuff 
+
+nbproject/private/
+
+
+## generic files to ignore
+
+*~
+.
+*.lock
+
+*.DS_Store
+
+*.swp
+
+*.out
+
+/build/
+*.pyc
+.idea/
+.pyc
+/dist/
+.project
+other_dependencies/
