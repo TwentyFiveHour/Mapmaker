@@ -124,15 +124,6 @@ class TileMap(object):
             tup = (tile.rain_string, tile.temp_string)
             tile.terrain = WHITTAKER_MAP[tup]
 
-    #essentially performs the function {object.property+=value}.
-    #with no value parameter, it is functionally {object.property++}
-    #Return type:  Void.
-    @staticmethod
-    def incrementGenericProperty(object, the_property, value = 1):
-        current_val = object.__getattribute__(the_property)
-        current_val += value
-        object.__setattr__(the_property, current_val)
-        
 
     def getTile(self, x, y) -> Tile:
         x = utils.modu(x, self.max_x)
@@ -148,16 +139,17 @@ class TileMap(object):
         return temp
         
         
-    #This is a method to create a height map on the tilemap with any property,
-    # using perlin noise.
-    #(Ex: the_property can be "height", "temperature", or anything else.)
-    #This new property is instilled into each tile with a new value.
-    #"Smoothness" defines how many tiles exist between two perlin noise spikes.
-    #gen_cache
 
 
     def makePropertiedHeightMap(self, the_property, smoothness = 10, wrap_x = False, wrap_y = False, bias = None, bias_amplitude = None):
+        """
+        #This is a method to create a height map on the tilemap with any property,
+        # using perlin noise.
+        #(Ex: the_property can be "height", "temperature", or anything else.)
+        #This new property is placed into the attributes of each tile with the new value.
+        #"Smoothness" defines how many tiles exist between two perlin noise spikes.
 
+        """
         grid_size_x = math.floor(self.max_x/smoothness)
         grid_size_y = math.floor(self.max_y/smoothness)
         gen = perlin_noise.perlinNoiseGenerator()
@@ -186,12 +178,15 @@ class TileMap(object):
 
 
 
+
+    def declareEffectiveProperties(self, property_name, percentile_to_title, title_name):
+        """
         #Maps out the property given to a given percentile.
         #percentile_to_title is a dictionary
-    #Ex:  99 percentile covers the top 99% of the map.
-    #title refers to the name of the property given to the tile.
-    #property refers to the field that the title is derived from.
-    def declareEffectiveProperties(self, property_name, percentile_to_title, title_name):
+        #Ex:  99 percentile covers the top 99% of the map.
+        #title refers to the name of the property given to the tile.
+        #property refers to the field that the title is derived from.
+        """
         flattened_tile_list = [self.getTile(x,y) for x in range(0, self.max_x) for y in range(0, self.max_y)]
         for tile in flattened_tile_list:
             
