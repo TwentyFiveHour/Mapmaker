@@ -125,9 +125,10 @@ class TileMap(object):
             tile.terrain = WHITTAKER_MAP[tup]
 
 
-    def getTile(self, x, y) -> Tile:
-        x = utils.modu(x, self.max_x)
-        y = utils.modu(y, self.max_y)
+    def getTile(self, x, y, wrap=True) -> Tile:
+        if (wrap is True):
+            x = utils.modu(x, self.max_x)
+            y = utils.modu(y, self.max_y)
         return self.xList[x][y]
     
     def __str__(self):
@@ -251,7 +252,10 @@ def makeCities(tile_map : TileMap, num_cities : int):
 #And be reasonably efficient, as they are called for every tile.
 
 def islandBiasFunction(tile_map:TileMap, tile:Tile, amplitude):
-
+    """
+    returns a higher value at the center of the map, and a  lower value at the edges.
+    Creates a number of elevated points equal to the value of (num_hills_x * num_hills_y)
+    """
     num_hills_x = 1
     num_hills_y = 1
     x = tile.x
@@ -264,8 +268,10 @@ def islandBiasFunction(tile_map:TileMap, tile:Tile, amplitude):
     cos_result_y = -math.cos(y/max_y * num_hills_y * 2 * math.pi)*amplitude
     return (cos_result_x + cos_result_y)/2
 
-#Causes cold temperatures at poles, and warm temps at the equator.
 def polarBiasFunction(tile_map:TileMap, tile:Tile, amplitude):
+    """
+    #Causes cold temperatures at poles, and warm temps at the equator (assuming amplitude is positive).
+    """
     equator = tile_map.max_y/2
     return (equator - math.fabs(equator-tile.y)) / equator * amplitude
 

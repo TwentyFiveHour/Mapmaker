@@ -3,7 +3,6 @@ from basicmap import Tile
 from collections import deque
 import heapq
 import math
-from collections import Set
 PASSABLE_DICT = {"mountain" : False,
                  "water" : False}
 
@@ -11,9 +10,10 @@ def getPassable(t:Tile):
     return PASSABLE_DICT.setdefault(t.terrain, True)
 
 
-#returns a set of cities connected to each other by passable terrain
 def findJoinableCitySets(map:MapGenerator):
-
+    """
+    #returns a set of cities connected to each other by passable terrain
+    """
     city_tile_set = [map.getTile(x,y) for x in range(0, map.x_size) for y in range(0,map.y_size)
                      if map.getTile(x,y).city is not None]
     full_tile_set = [map.getTile(x,y) for x in range(0,map.x_size) for y in range(0,map.y_size)]
@@ -56,8 +56,7 @@ def findJoinableCitySets(map:MapGenerator):
         contiguous_city_list_list.append(cont_cities)
     return contiguous_city_list_list
 
-#Precondition: Requires has_been_visited to have been set for t previously, and also that it's not already in
-# the deque.
+
 def addTileIfAdmissible(deq:deque, t:Tile):
     if (getPassable(t) and not t._has_been_visited):
         if t not in deq:
@@ -66,10 +65,11 @@ def addTileIfAdmissible(deq:deque, t:Tile):
 
 
 class Node(object):
-
+    """
     #heuristic refers to linear distance to goal node.
     #The first node should have a parent of None.
     #Parent is the node this node was spawned off of; used for ancestry.
+    """
     def __init__(self, tile : Tile, parent, heuristic):
         self.tile = tile
         self.parent = parent
@@ -93,9 +93,11 @@ class Node(object):
         return (node1.heuristic + node1.distance) < (node2.heuristic + node2.distance)
 
 
-#Represents the A-Star algorithm on a tiled map
-class AStarNodeMap(object):
 
+class AStarNodeMap(object):
+    """
+    #Represents the A-Star algorithm on a tiled map
+    """
     def __init__(self, map:MapGenerator, start:Tile, goal:Tile):
 
         self.start = start
@@ -106,14 +108,20 @@ class AStarNodeMap(object):
         self.goal = goal
         self.map = map
 
-    #Acts as heuristic for A-star algorithm.  Gets distance between given point and the goal.
     def getLinearDistanceToGoal(self, x, y) -> int:
+        """
+
+        #Acts as heuristic for A-star algorithm.  Gets distance between given point and the goal.
+        """
         dx2 = pow(x - self.goal.x, 2)
         dy2 = pow(y - self.goal.y, 2)
         return math.sqrt(dx2 + dy2)
 
 
     def buildAdjacentNodes(self, parent:Node):
+        """
+        Builds nodes adjacent to the current tile if the current tile is "valid", and adds them to the open set.
+        """
         x = parent.tile.x
         y = parent.tile.y
         n = self.map.getTile(x,y+1)
@@ -136,15 +144,5 @@ class AStarNodeMap(object):
             self.buildAdjacentNodes(current)
         return current.getAncestry()
 
-#stolen from the PYTHON LIBRARY, MWAHAHAHAHA
-class memoize:
-    def __init__(self, function):
-        self.function = function
-        self.memoized = {}
 
-    def __call__(self, *args):
-        try:
-            return self.memoized[args]
-        except KeyError:
-            self.memoized[args] = self.function(*args)
-            return self.memoized[args]
+
