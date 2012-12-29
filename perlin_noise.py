@@ -83,11 +83,6 @@ class perlinNoiseGenerator(object):
 
 
 
-
-
-
-
-
     def easeFunction(self, num : float):
         """
         #USAGE:  Feed it a number between 0 and 1, and it will output a number between lower_bound and upper_bound

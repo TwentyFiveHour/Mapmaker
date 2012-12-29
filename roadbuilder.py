@@ -1,5 +1,6 @@
-from mapgen import MapGenerator
+
 from basicmap import Tile
+import basicmap as bmap
 from collections import deque
 import heapq
 import math
@@ -10,13 +11,14 @@ def getPassable(t:Tile):
     return PASSABLE_DICT.setdefault(t.terrain, True)
 
 
-def findJoinableCitySets(map:MapGenerator):
+def findJoinableCitySets(map: bmap.TileMap):
     """
     #returns a set of cities connected to each other by passable terrain
     """
-    city_tile_set = [map.getTile(x,y) for x in range(0, map.x_size) for y in range(0,map.y_size)
+    
+    city_tile_set = [map.getTile(x,y) for x in range(0, map.max_x) for y in range(0,map.max_y)
                      if map.getTile(x,y).city is not None]
-    full_tile_set = [map.getTile(x,y) for x in range(0,map.x_size) for y in range(0,map.y_size)]
+    full_tile_set = [map.getTile(x,y) for x in range(0,map.max_x) for y in range(0,map.max_y)]
     for tile in full_tile_set:
         tile._has_been_visited = False
     previously_encountered_city_tiles = []
@@ -98,7 +100,7 @@ class AStarNodeMap(object):
     """
     #Represents the A-Star algorithm on a tiled map
     """
-    def __init__(self, map:MapGenerator, start:Tile, goal:Tile):
+    def __init__(self, map : bmap.TileMap, start:Tile, goal:Tile):
 
         self.start = start
         self.already_hit = []
@@ -143,6 +145,5 @@ class AStarNodeMap(object):
             current = heapq.heappop(self.open_set)
             self.buildAdjacentNodes(current)
         return current.getAncestry()
-
 
 

@@ -1,9 +1,11 @@
 __author__ = 'Aaron Kaufman'
-import mapgen
 import basicmap
 import roadbuilder
 import unittest as test
-import random
+import perlin_noise
+import math
+
+
 #Python unit test for roadbuilder.py!
 
 
@@ -13,11 +15,11 @@ class TestRoadBuilder(test.TestCase):
     def setUp(self):
         self.seq = range(10)
 
-    def test_complex_a_star(self):
+    def test_complex_a_star_validity(self):
 
         #now:  We need to test our A* algorithm on a more complex route, requiring routing around obstacles.
-        map = mapgen.MapGenerator(7,7)
-        map.clearAllTerrain('water')
+        map = basicmap.TileMap(10,10)
+        map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
         map.getTile(0,2).terrain = 'grass'
@@ -46,8 +48,8 @@ class TestRoadBuilder(test.TestCase):
 
 
     def test_a_star_correctness(self):
-        map = mapgen.MapGenerator(7,7)
-        map.clearAllTerrain('water')
+        map = basicmap.TileMap(7,7)
+        map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
         map.getTile(0,2).terrain = 'grass'
@@ -86,8 +88,8 @@ class TestRoadBuilder(test.TestCase):
     def test_simple_a_star(self):
         #Now, a test of the AStarNodeMap in the most basic case.
 
-        map = mapgen.MapGenerator(4,4)
-        map.clearAllTerrain('water')
+        map = basicmap.TileMap(10,10)
+        map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
         map.getTile(0,2).terrain = 'grass'
@@ -111,8 +113,8 @@ class TestRoadBuilder(test.TestCase):
         #FIRST:  Contiguous city tile test.
         #Question asked: Does our algorithm properly determine what cities are connectable in the most basic case?
 
-        map = mapgen.MapGenerator(4,4)
-        map.clearAllTerrain('water')
+        map = basicmap.TileMap(4,4)
+        map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
         map.getTile(0,2).terrain = 'grass'
@@ -124,7 +126,6 @@ class TestRoadBuilder(test.TestCase):
 
         map.getTile(2,2).terrain = 'grass'
         map.getTile(2,2).city = "C"
-        #TODO: Replace with assertion\
 
         lis = roadbuilder.findJoinableCitySets(map)
         num_groups = 0
@@ -139,4 +140,45 @@ class TestRoadBuilder(test.TestCase):
                 self.assertTrue(t.city == 'C')
                 num_groups+=1
 
+
+
+class TestPerlinNoiseGeneration(test.TestCase):
+    def test_perlin_noise(self):
+        gen = perlin_noise.perlinNoiseGenerator()
+        a = gen.noise2d(2,3)
+        b = gen.noise2d(2,3)
+
+        c = gen.noise2d(3,2)
+        self.assertTrue(a==b)
+        self.assertTrue(a!=c)
+
+        gen2 = perlin_noise.perlinNoiseGenerator()
+        self.assertTrue(gen2.noise2d(3,3) != gen.noise2d(3,3))
+        point = 1,1.4
+
+        this_one = gen.interpolate(*point)
+        that_one = gen.interpolate(*point)
+
+        a_different_one = gen.interpolate(30,8.3)
+        self.assertTrue(this_one == that_one)
+        self.assertTrue(this_one != a_different_one)
+
+        a_mid_point = 30.5,30.5
+        x,y=a_mid_point
+        a = math.floor(x),math.floor(y)
+        b = math.floor(x),math.ceil(y)
+        c = math.ceil(x), math.floor(y)
+        d = math.ceil(x), math.ceil(y)
+
+        outer_points = a,b,c,d
+        noise = [gen.noise2d(x,y) for x,y in outer_points]
+        average = sum(noise)/float(len(noise))
+        calculated = gen.interpolate(30.5,30.5)
+        #Algorithm requires that a point midway between all nearest vertices have a height equal to that
+        #of all points.
+        self.assertTrue(math.fabs(average - calculated) < 0.001)
+
+        rounded_point = 30,30
+        #Checks that the noise generated for that point is the same as the interpolated value for that point.
+        self.assertTrue(gen.interpolate(*rounded_point) == gen.noise2d(*rounded_point))
 

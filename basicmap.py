@@ -7,7 +7,7 @@ Created on Aug 31, 2012
 from random import randint
 from random import randrange
 import math
-
+from colors import *
 import utils
 from random import choice
 import perlin_noise
@@ -39,17 +39,9 @@ POLAR_BIAS = 60
 ISLANDS_X = 1
 ISLANDS_Y = 1
 #Total islands = islands_x * islands_y
+LAND="land"
 
-
-
-WATER = "water"
-LAND = "land"
-MOUNTAIN = "mountains"
-PLAINS = "plains"
-GRASS = "grass"
-DARK_WATER = 'dark water'
-
-WATER_DICT = {WATER : WATER,  'dark water' : WATER}
+WATER_DICT = {"water" : WATER,  'dark water' : WATER}
 WATER_DICT.setdefault(LAND)
 
 class Tile(object):
@@ -98,24 +90,32 @@ class City(object):
 class TileMap(object):
 
     def __init__(self, max_x = 50, max_y =50):
+        self.max_x = max_x
+        self.max_y = max_y
+
+        #Actually builds out the map.  Put in a separate function so that it can be called to
+        #regenerate the map.
+        self.remake()
+
+    def remake(self):
         '''
         Constructor
         '''
-        self.max_y = max_y
-        self.max_x = max_x
         self.xList = []
-        for x in range(0, max_x):
+        for x in range(0, self.max_x):
             yList = []
             self.xList.append(yList)
-            for y in range(0, max_y):
+            for y in range(0, self.max_y):
                 yList.append(Tile(WATER, x, y))
-
-        self.makePropertiedHeightMap("height", bias = islandBiasFunction, bias_amplitude = 40)
+        self.makePropertiedHeightMap("height", bias = islandBiasFunction, bias_amplitude = -40)
         self.performWhitakerAlgorithm()
         self.fillWithWater(30)
-        makeCities(self, 10)
+        self.makeCities(10)
         
     def performWhitakerAlgorithm(self):
+        """
+        Creates maps of temperature and rainfall, and uses those to dictate terrain types.
+        """
         self.makePropertiedHeightMap("temperature", smoothness = 20, bias = polarBiasFunction, bias_amplitude = 80)
         self.declareEffectiveProperties("temperature",TEMP_MAP,"temp_string")
         self.makePropertiedHeightMap("rainfall", smoothness = 20)
@@ -125,10 +125,9 @@ class TileMap(object):
             tile.terrain = WHITTAKER_MAP[tup]
 
 
-    def getTile(self, x, y, wrap=True) -> Tile:
-        if (wrap is True):
-            x = utils.modu(x, self.max_x)
-            y = utils.modu(y, self.max_y)
+    def getTile(self, x, y) -> Tile:
+        x = utils.modu(x, self.max_x)
+        y = utils.modu(y, self.max_y)
         return self.xList[x][y]
     
     def __str__(self):
@@ -182,11 +181,13 @@ class TileMap(object):
 
     def declareEffectiveProperties(self, property_name, percentile_to_title, title_name):
         """
-        #Maps out the property given to a given percentile.
+        #Maps out the property given to a percentile.
         #percentile_to_title is a dictionary
         #Ex:  99 percentile covers the top 99% of the map.
         #title refers to the name of the property given to the tile.
         #property refers to the field that the title is derived from.
+        For example, the property could be temperature, and that could correspond to the titles
+        "warm", "cold", or "medium" depending on percentile.
         """
         flattened_tile_list = [self.getTile(x,y) for x in range(0, self.max_x) for y in range(0, self.max_y)]
         for tile in flattened_tile_list:
@@ -234,14 +235,17 @@ class TileMap(object):
         return
 
 
+    def clearMap(self, terrain):
+        tile_list = [self.getTile(x,y) for x in range(0, self.max_x) for y in range(0, self.max_y)]
+        for tile in tile_list:
+            tile.terrain = terrain
 
-
-def makeCities(tile_map : TileMap, num_cities : int):
-    land_tiles = [tile_map.getTile(x,y) for x in range(0,tile_map.max_x) for y in range(0, tile_map.max_y)
-                  if WATER_DICT.get(tile_map.getTile(x,y).terrain, LAND) == LAND]
-    city_tiles = [choice(land_tiles) for x in range (0,num_cities)]
-    for tile in city_tiles:
-        tile.city = City()
+    def makeCities(self, num_cities : int):
+        land_tiles = [self.getTile(x,y) for x in range(0,self.max_x) for y in range(0, self.max_y)
+                      if WATER_DICT.get(self.getTile(x,y).terrain, LAND) == LAND]
+        city_tiles = [choice(land_tiles) for x in range (0,num_cities)]
+        for tile in city_tiles:
+            tile.city = City()
 
 
 
@@ -251,10 +255,14 @@ def makeCities(tile_map : TileMap, num_cities : int):
 #These must demand uniform parameters
 #And be reasonably efficient, as they are called for every tile.
 
+
 def islandBiasFunction(tile_map:TileMap, tile:Tile, amplitude):
     """
     returns a higher value at the center of the map, and a  lower value at the edges.
     Creates a number of elevated points equal to the value of (num_hills_x * num_hills_y)
+    This corresponds to a number of islands, if we're using this to increment our Height values.
+    Note: Islands are not guaranteed separation.  Amount of separation depends on % of water in the map.
+    Given a negative amplitude, it will generate a central lake.
     """
     num_hills_x = 1
     num_hills_y = 1
@@ -278,6 +286,9 @@ def polarBiasFunction(tile_map:TileMap, tile:Tile, amplitude):
 
 if __name__ == '__main__':
     cProfile.run('TileMap(200,200)', )
+
+
+
 
 #benchmark: 17 secs with bias function
 #14 without

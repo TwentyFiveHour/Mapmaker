@@ -1,10 +1,14 @@
 __author__ = 'Aaron Kaufman'
 
 from pygame import *
-from mapgen import *
 from basicmap import City
+import basicmap as bmap
 import pygame._view
 import pygame.font
+import math
+import terrain
+import sys
+import colors
 
 
 FPS = 15
@@ -46,27 +50,27 @@ class Button(object):
 
 
     def __init__(self, function, text:str, box: tuple ):
-        self.x_start, self.y_start, self.x_size, self.y_size = box
+        self.x_start, self.y_start, self.max_x, self.max_y = box
         self.level = CURRENT_LEVEL
         self.function = function
         self.text = text
 
-    def click(self, chart:MapGenerator):
+    def click(self, chart:bmap.TileMap):
         self.function(chart)
 
     def containsPoint(self, point:tuple):
         x,y = point
-        if (x < self.x_start + self.x_size and x > self.x_start):
-            if (y < self.y_start + self.y_size and y > self.y_start):
+        if (x < self.x_start + self.max_x and x > self.x_start):
+            if (y < self.y_start + self.max_y and y > self.y_start):
                 return True
         return False
 
     def drawSelf(self):
-        pygame.draw.rect(DISPLAYSURF, RED, pygame.Rect(self.x_start, self.y_start, self.x_size, self.y_size))
+        pygame.draw.rect(DISPLAYSURF, RED, pygame.Rect(self.x_start, self.y_start, self.max_x, self.max_y))
 
         rendered_text = BASICFONT.render(self.text, True, WHITE)
         current_rect = rendered_text.get_rect()
-        current_rect.topleft = (self.x_start, self.y_start + self.y_size/2)
+        current_rect.topleft = (self.x_start, self.y_start + self.max_y/2)
         DISPLAYSURF.blit(rendered_text, current_rect)
 
 
@@ -82,20 +86,20 @@ def paintControls(rendered_control_text: list, right_bounds : int, spacer : int)
     i=0
     for button in list:
         assert(isinstance(button, Button))
-        button.y_start += (button.y_size + 10)*i
+        button.y_start += (button.max_y + 10)*i
         i+=1
         button.drawSelf()
         BUTTON_LIST.append(button)
 
 
 
-def paintMap(map_gen : MapGenerator):
-    tiles= [x[y] for y in range(0,map_gen.y_size) for x in map_gen.tile_map.xList]
-    tile_size = math.floor(min(WINDOWHEIGHT/map_gen.y_size, WINDOWWIDTH/map_gen.x_size))
+def paintMap(tile_map : bmap.TileMap):
+    tiles= [x[y] for y in range(0,tile_map.max_y) for x in tile_map.xList]
+    tile_size = math.floor(min(WINDOWHEIGHT/tile_map.max_y, WINDOWWIDTH/tile_map.max_x))
     for tile in tiles:
         paintTile(tile, tile_size)
 
-    right_bounds = tile_size * map_gen.x_size
+    right_bounds = tile_size * tile_map.max_x
     spacer = 50
     controls_to_display = [BASICFONT.render((KEYSTOFUNCTION[control].__name__), True, WHITE)
                            for (control) in KEYSTOFUNCTION.keys()]
@@ -104,20 +108,20 @@ def paintMap(map_gen : MapGenerator):
 
     pygame.display.update()
     while (True):
-        pollForInput(map_gen)
+        pollForInput(tile_map)
 
 
 def terminate():
     pygame.quit()
     sys.exit()
 
-def paintTile(tile : Tile, tile_size : int):
+def paintTile(tile : bmap.Tile, tile_size : int):
     x = tile.x * tile_size
     y = tile.y * tile_size
     tileRect = pygame.Rect(x, y, tile_size, tile_size)
-    pygame.draw.rect(DISPLAYSURF, Terrain().getColor(tile.terrain), tileRect)
+    pygame.draw.rect(DISPLAYSURF, terrain.nameToColor[tile.terrain], tileRect)
     #Now, draw inner tile in a slightly lighter colour.
-    lighterColor = brighten(Terrain().getColor(tile.terrain))
+    lighterColor = brighten(terrain.nameToColor[tile.terrain])
     lighterRect = pygame.Rect(x + 2, y + 2 , tile_size - 4, tile_size - 4)
     pygame.draw.rect(DISPLAYSURF, lighterColor, lighterRect)
     #Now, draw the city on the tile!  If there is one.
@@ -128,7 +132,8 @@ def paintTile(tile : Tile, tile_size : int):
         DISPLAYSURF.blit(city_image, (x, y))
 
 
-
+def remake(map : bmap.TileMap):
+    map.remake()
 
 #Accepts a RGB tuple, and returns an RGB tuple that's a bit brighter.
 def brighten(color):
@@ -146,17 +151,8 @@ def brighten(color):
 
     return (val[0],val[1],val[2])
 
-def drawContinentsByHeight(chart : MapGenerator):
-    chart.clear()
-    chart.drawContinentsByHeight()
-    chart.main()
-
-
-def craterTheLand(chart : MapGenerator):
-    chart.craterTheLand()
-
     #Smooths the generated land by filled all water with 3-4 land neighbors as land, and all land with 3-4 water neighbors as water.
-def smoothingAlgorithm(chart : MapGenerator):
+def smoothingAlgorithm(chart : bmap.TileMap):
     chart.smooth()
 
 
@@ -172,15 +168,13 @@ def main():
     pygame.display.set_caption('Map Generator!')
 
     global KEYSTOFUNCTION
-    KEYSTOFUNCTION = {K_h : drawContinentsByHeight,
-                      K_r : craterTheLand,
-                      K_s : smoothingAlgorithm
-    }
+    KEYSTOFUNCTION = {K_r : remake}
 
 
 
 
-    chart = MapGenerator(100, 100)
+
+    chart = bmap.TileMap(50, 50)
 
 
 
