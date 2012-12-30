@@ -7,7 +7,7 @@ import math
 PASSABLE_DICT = {"mountain" : False,
                  "water" : False}
 
-def getPassable(t:Tile):
+def _getPassable(t:Tile):
     return PASSABLE_DICT.setdefault(t.terrain, True)
 
 
@@ -36,7 +36,7 @@ def findJoinableCitySets(map: bmap.TileMap):
             t = open_set.pop()
             x=t.x
             y=t.y
-            if not getPassable(t):  #don't use this tile if we can't pass it.
+            if not _getPassable(t):  #don't use this tile if we can't pass it.
                 continue
             if (True is t._has_been_visited): # don't use this tile if it has been visited.
                 continue
@@ -48,10 +48,10 @@ def findJoinableCitySets(map: bmap.TileMap):
                 s = map.getTile(x,y-1)
                 e = map.getTile(x+1,y)
                 w = map.getTile(x-1,y)
-                addTileIfAdmissible(open_set, n)
-                addTileIfAdmissible(open_set, s)
-                addTileIfAdmissible(open_set, e)
-                addTileIfAdmissible(open_set, w)
+                _addTileIfAdmissible(open_set, n)
+                _addTileIfAdmissible(open_set, s)
+                _addTileIfAdmissible(open_set, e)
+                _addTileIfAdmissible(open_set, w)
                 if (t.city is not None):
                     cont_cities.append(t)
                     previously_encountered_city_tiles.append(t)
@@ -59,8 +59,8 @@ def findJoinableCitySets(map: bmap.TileMap):
     return contiguous_city_list_list
 
 
-def addTileIfAdmissible(deq:deque, t:Tile):
-    if (getPassable(t) and not t._has_been_visited):
+def _addTileIfAdmissible(deq:deque, t:Tile):
+    if (_getPassable(t) and not t._has_been_visited):
         if t not in deq:
             deq.appendleft(t)
 
@@ -96,7 +96,7 @@ class Node(object):
 
 
 
-class AStarNodeMap(object):
+class _AStarNodeMap(object):
     """
     #Represents the A-Star algorithm on a tiled map
     """
@@ -133,7 +133,7 @@ class AStarNodeMap(object):
 
         new_tiles = [n,s,e,w]
         for tile in new_tiles:
-            if ((tile.x,tile.y) not in self.already_hit and getPassable(tile)):
+            if ((tile.x,tile.y) not in self.already_hit and _getPassable(tile)):
                 heapq.heappush(self.open_set, Node(tile, parent, self.getLinearDistanceToGoal(tile.x, tile.y)))
                 tup = (tile.x, tile.y)
                 self.already_hit.append(tup)
@@ -146,4 +146,54 @@ class AStarNodeMap(object):
             self.buildAdjacentNodes(current)
         return current.getAncestry()
 
+def getClosestRoute(map : bmap.TileMap, start:Tile, goal:Tile):
+    """
+    Creates an A* node map and retrieves the result.
+    """
+    node_map = _AStarNodeMap(map,start,goal)
+    return node_map.getAStarResult()
+
+
+def getMinimumSpanningTree(point_list : list):
+    """
+    #Figures out the minimum spanning tree for a set of points (or rather, things with an x and y attribute).
+    #Returns a list of point pairs corresponding to the minimum spanning tree.
+    #Uses naive distance calculations (not A*), so it's just n^2 with number of cities.
+    """
+
+    point_pair_list = [(a,b) for a in point_list for b in point_list]
+    primary_distance_dict = {}
+    for point_pair in point_pair_list:
+        a,b = point_pair
+        distance_squared = math.pow(a.x-b.x, 2) + math.pow(a.y-b.y,2)
+        primary_distance_dict[point_pair] = distance_squared
+
+
+    sorted_pairs = sorted(primary_distance_dict, key=primary_distance_dict.get)
+    sorted_pairs = [pair for pair in sorted_pairs if pair[0] is not pair[1]]
+    spanning_tree = [sorted_pairs[0]]
+    points_in_spanning_tree = set()
+    #TODO:  pair[1] is a single thing, but we need tuples to compare w spanning_tree.
+    points_in_spanning_tree.add((sorted_pairs[0][0]))
+    points_in_spanning_tree.add((sorted_pairs[0][1]))
+    distance_dict = dict([(pair, primary_distance_dict[pair]) for pair in primary_distance_dict.keys()
+                              if pair[0] not in points_in_spanning_tree
+                                and pair[1] in points_in_spanning_tree
+                                and pair[1] is not pair[0]])
+    while (distance_dict):
+        next_pair = [pair for pair in distance_dict.keys()
+                    if distance_dict[pair] == min(distance_dict.values())][0]
+        spanning_tree.append(next_pair)
+        points_in_spanning_tree.add((next_pair[0]))
+        points_in_spanning_tree.add((next_pair[1]))
+        new_distance_dict = dict([(pair, primary_distance_dict[pair]) for pair in primary_distance_dict.keys()
+                if pair[0] not in points_in_spanning_tree
+                and pair[1] in points_in_spanning_tree])
+        distance_dict = new_distance_dict
+    return spanning_tree
+
+
+
+
+        
 

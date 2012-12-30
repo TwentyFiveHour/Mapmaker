@@ -1,12 +1,12 @@
 __author__ = 'Aaron Kaufman'
 import basicmap
-import roadbuilder
+import graph_tools
 import unittest as test
 import perlin_noise
 import math
 
 
-#Python unit test for roadbuilder.py!
+#Python unit test for graph_tools.py!
 
 
 
@@ -38,7 +38,7 @@ class TestRoadBuilder(test.TestCase):
         B2 = map.getTile(0,0)
         A2.city = "A"
         B2.city = "B"
-        astar2 = roadbuilder.AStarNodeMap(map, A2, B2)
+        astar2 = graph_tools._AStarNodeMap(map, A2, B2)
         result2 = astar2.getAStarResult()
         self.assertTrue(map.getTile(4,4) in result2)
         self.assertTrue(len(result2) ==14)
@@ -76,7 +76,7 @@ class TestRoadBuilder(test.TestCase):
         B2 = map.getTile(0,0)
         A2.city = "A"
         B2.city = "B"
-        astar2 = roadbuilder.AStarNodeMap(map, A2, B2)
+        astar2 = graph_tools._AStarNodeMap(map, A2, B2)
         result2 = astar2.getAStarResult()
         self.assertTrue(map.getTile(4,4) not in result2)
         self.assertTrue(map.getTile(5,2) in result2, [tile.x.__str__() + ", " + tile.y.__str__() for tile in result2])
@@ -103,7 +103,7 @@ class TestRoadBuilder(test.TestCase):
         map.getTile(2,2).city = "C"
 
 
-        astar = roadbuilder.AStarNodeMap(map, A, B)
+        astar = graph_tools._AStarNodeMap(map, A, B)
         result = astar.getAStarResult()
         self.assertTrue(result[0] == B)
         self.assertTrue(result[1].terrain == 'grass')
@@ -127,7 +127,7 @@ class TestRoadBuilder(test.TestCase):
         map.getTile(2,2).terrain = 'grass'
         map.getTile(2,2).city = "C"
 
-        lis = roadbuilder.findJoinableCitySets(map)
+        lis = graph_tools.findJoinableCitySets(map)
         num_groups = 0
         while (lis):
             cur = lis.pop()
@@ -142,7 +142,7 @@ class TestRoadBuilder(test.TestCase):
 
 
 
-class TestPerlinNoiseGeneration(test.TestCase):
+class test_perlin_noise(test.TestCase):
     def test_perlin_noise(self):
         gen = perlin_noise.perlinNoiseGenerator()
         a = gen.noise2d(2,3)
@@ -182,3 +182,36 @@ class TestPerlinNoiseGeneration(test.TestCase):
         #Checks that the noise generated for that point is the same as the interpolated value for that point.
         self.assertTrue(gen.interpolate(*rounded_point) == gen.noise2d(*rounded_point))
 
+class test_spanning_tree_generation(test.TestCase):
+    def test_basic_tree(self):
+        t1 = basicmap.Tile('grass', 1,3)
+        t2 = basicmap.Tile('grass', 2,10)
+        t3 = basicmap.Tile('grass', 2,5)
+
+        tiles = [t1,t2,t3]
+        spanning_tree = graph_tools.getMinimumSpanningTree(tiles)
+        self.assertTrue(hasPairTuple(t1, t3, spanning_tree), str(spanning_tree))
+        self.assertTrue(hasPairTuple(t2, t3, spanning_tree), str(spanning_tree))
+        self.assertTrue(not hasPairTuple(t1, t2, spanning_tree), str(spanning_tree))
+
+    def test_large_tree(self):
+        t1 = basicmap.Tile('grass', 1,3)
+        t2 = basicmap.Tile('grass', 2,10)
+        t3 = basicmap.Tile('grass', 2,5)
+        t4 = basicmap.Tile('grass', 3,15)
+        t5 = basicmap.Tile('grass', 2.1,20)
+        t6 = basicmap.Tile('grass', 2.5,35)
+
+        tiles = [t1,t2,t3,t4,t5,t6]
+        spanning_tree = graph_tools.getMinimumSpanningTree(tiles)
+
+        self.assertTrue(hasPairTuple(t1, t3, spanning_tree), str(spanning_tree))
+        self.assertTrue(hasPairTuple(t2, t3, spanning_tree), str(spanning_tree))
+        self.assertTrue(hasPairTuple(t2, t4, spanning_tree), str(spanning_tree))
+        self.assertTrue(hasPairTuple(t4, t5, spanning_tree), str(spanning_tree))
+        self.assertTrue(hasPairTuple(t5, t6, spanning_tree), str(spanning_tree))
+
+        self.assertTrue(len(spanning_tree)==5)
+
+def hasPairTuple(a, b, container):
+    return ((a,b) in container or (b,a) in container)

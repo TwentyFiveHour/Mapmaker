@@ -7,7 +7,7 @@ import functools
 def modu(num, divby):
     return (num % divby + abs(divby))%divby
 
-
+#Stolen shamelessly from some other python library
 def memo(func):
     cache = {}
     @ functools.wraps(func)
