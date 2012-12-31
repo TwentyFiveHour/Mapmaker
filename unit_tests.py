@@ -38,7 +38,7 @@ class TestRoadBuilder(test.TestCase):
         B2 = map.getTile(0,0)
         A2.city = "A"
         B2.city = "B"
-        astar2 = graph_tools._AStarNodeMap(map, A2, B2)
+        astar2 = basicmap._AStarNodeMap(map, A2, B2)
         result2 = astar2.getAStarResult()
         self.assertTrue(map.getTile(4,4) in result2)
         self.assertTrue(len(result2) ==14)
@@ -76,7 +76,7 @@ class TestRoadBuilder(test.TestCase):
         B2 = map.getTile(0,0)
         A2.city = "A"
         B2.city = "B"
-        astar2 = graph_tools._AStarNodeMap(map, A2, B2)
+        astar2 = basicmap._AStarNodeMap(map, A2, B2)
         result2 = astar2.getAStarResult()
         self.assertTrue(map.getTile(4,4) not in result2)
         self.assertTrue(map.getTile(5,2) in result2, [tile.x.__str__() + ", " + tile.y.__str__() for tile in result2])
@@ -103,7 +103,7 @@ class TestRoadBuilder(test.TestCase):
         map.getTile(2,2).city = "C"
 
 
-        astar = graph_tools._AStarNodeMap(map, A, B)
+        astar = basicmap._AStarNodeMap(map, A, B)
         result = astar.getAStarResult()
         self.assertTrue(result[0] == B)
         self.assertTrue(result[1].terrain == 'grass')
@@ -127,7 +127,7 @@ class TestRoadBuilder(test.TestCase):
         map.getTile(2,2).terrain = 'grass'
         map.getTile(2,2).city = "C"
 
-        lis = graph_tools.findJoinableCitySets(map)
+        lis = basicmap.findJoinableCitySets(map)
         num_groups = 0
         while (lis):
             cur = lis.pop()
@@ -140,6 +140,29 @@ class TestRoadBuilder(test.TestCase):
                 self.assertTrue(t.city == 'C')
                 num_groups+=1
 
+    def test_road_building(self):
+        map = basicmap.TileMap(10,10)
+        map.clearMap('water')
+        map.getTile(0,0).city = 'B'
+        map.getTile(0,0).terrain = 'grass'
+        map.getTile(0,1).terrain = 'grass'
+        map.getTile(0,2).terrain = 'grass'
+        map.getTile(0,3).terrain = 'grass'
+        map.getTile(0,4).terrain = 'grass'
+        map.getTile(1,4).terrain = 'grass'
+        map.getTile(2,4).terrain = 'grass'
+        map.getTile(3,4).terrain = 'grass'
+        map.getTile(4,4).terrain = 'grass'
+        map.getTile(5,4).terrain = 'grass'
+        map.getTile(5,3).terrain = 'grass'
+        map.getTile(5,2).terrain = 'grass'
+        map.getTile(5,1).terrain = 'grass'
+        map.getTile(5,0).terrain = 'grass'
+        map.getTile(5,0).city = 'A'
+        map.drawRoadsBetweenCities()
+        self.assertTrue(map.getTile(4,4).road is not None)
+        self.assertTrue(map.getTile(5,0).road is not None)
+        self.assertTrue(map.getTile(0,0).road is not None)
 
 
 class test_perlin_noise(test.TestCase):
@@ -215,3 +238,5 @@ class test_spanning_tree_generation(test.TestCase):
 
 def hasPairTuple(a, b, container):
     return ((a,b) in container or (b,a) in container)
+
+

@@ -18,7 +18,8 @@ TUNDRA = 'tundra'
 FOREST = 'forest'
 SWAMP = 'swamp'
 RAINFOREST = 'rainforest'
-
+#This is impassible terrain.
+IMPASSIBLE = 'impassible'
 
 nameToColor = {}
 nameToColor[GRASS] = c.GRASSLAND

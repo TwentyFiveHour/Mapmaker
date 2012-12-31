@@ -8,7 +8,7 @@ import pygame.font
 import math
 import terrain
 import sys
-import colors
+import colors as co
 
 
 FPS = 15
@@ -19,12 +19,6 @@ MAPWIDTH = 620
 BUTTONWIDTH = 90
 BUTTONHEIGHT = 30
 BUTTONCOLOR = (0,0,0)
-WHITE = (255,255,255)
-BLACK     = (  0,   0,   0)
-RED       = (255,   0,   77)
-GREEN     = (  0, 255,   0)
-SNOW =      (233,233,255)
-
 
 ##BUTTON-CREATION CODE.  Involves usage of "level" to
 # determine which buttons are currently active, for hierarchical menus.
@@ -66,9 +60,9 @@ class Button(object):
         return False
 
     def drawSelf(self):
-        pygame.draw.rect(DISPLAYSURF, RED, pygame.Rect(self.x_start, self.y_start, self.max_x, self.max_y))
+        pygame.draw.rect(DISPLAYSURF, co.RED, pygame.Rect(self.x_start, self.y_start, self.max_x, self.max_y))
 
-        rendered_text = BASICFONT.render(self.text, True, WHITE)
+        rendered_text = BASICFONT.render(self.text, True, co.WHITE)
         current_rect = rendered_text.get_rect()
         current_rect.topleft = (self.x_start, self.y_start + self.max_y/2)
         DISPLAYSURF.blit(rendered_text, current_rect)
@@ -97,11 +91,11 @@ def paintMap(tile_map : bmap.TileMap):
     tiles= [x[y] for y in range(0,tile_map.max_y) for x in tile_map.xList]
     tile_size = math.floor(min(WINDOWHEIGHT/tile_map.max_y, WINDOWWIDTH/tile_map.max_x))
     for tile in tiles:
-        paintTile(tile, tile_size)
+        paintTile(tile, tile_size, tile_map)
 
     right_bounds = tile_size * tile_map.max_x
     spacer = 50
-    controls_to_display = [BASICFONT.render((KEYSTOFUNCTION[control].__name__), True, WHITE)
+    controls_to_display = [BASICFONT.render((KEYSTOFUNCTION[control].__name__), True, co.WHITE)
                            for (control) in KEYSTOFUNCTION.keys()]
 
     paintControls(controls_to_display, right_bounds, spacer)
@@ -115,21 +109,46 @@ def terminate():
     pygame.quit()
     sys.exit()
 
-def paintTile(tile : bmap.Tile, tile_size : int):
+def paintTile(tile : bmap.Tile, tile_size : int, map : bmap.TileMap):
     x = tile.x * tile_size
     y = tile.y * tile_size
-    tileRect = pygame.Rect(x, y, tile_size, tile_size)
-    pygame.draw.rect(DISPLAYSURF, terrain.nameToColor[tile.terrain], tileRect)
+    tile_rect = pygame.Rect(x, y, tile_size, tile_size)
+    pygame.draw.rect(DISPLAYSURF, terrain.nameToColor[tile.terrain], tile_rect)
     #Now, draw inner tile in a slightly lighter colour.
     lighterColor = brighten(terrain.nameToColor[tile.terrain])
     lighterRect = pygame.Rect(x + 2, y + 2 , tile_size - 4, tile_size - 4)
     pygame.draw.rect(DISPLAYSURF, lighterColor, lighterRect)
+
+    drawRoads(tile_rect, map, tile)
+
     #Now, draw the city on the tile!  If there is one.
     if (tile.city is not None):
         assert(isinstance(tile.city, City))
         city_image = pygame.image.load(tile.city.get_pic())
         city_image = pygame.transform.scale(city_image, (tile_size, tile_size))
         DISPLAYSURF.blit(city_image, (x, y))
+
+def drawRoads(tile_rect : pygame.Rect, map: bmap.TileMap, tile:bmap.Tile):
+    """
+    draws the road if there is one.  Extends from current tile to adjacent tiles with roads
+    """
+    center = tile_rect.center
+    midtop = tile_rect.midtop
+    midbottom = tile_rect.midbottom
+    midleft = tile_rect.midleft
+    midright = tile_rect.midright
+    x = tile.x
+    y = tile.y
+    line_width = 3
+    if tile.road is not None:
+        if (map.getTile(x+1,y).road is "road"): #to the right
+            pygame.draw.line(DISPLAYSURF, co.BROWN, center, midright, line_width)
+        if (map.getTile(x-1,y).road is "road"): #to the left
+            pygame.draw.line(DISPLAYSURF, co.BROWN, center, midleft, line_width)
+        if (map.getTile(x,y-1).road is "road"): #to  up
+            pygame.draw.line(DISPLAYSURF, co.BROWN, center, midtop, line_width)
+        if (map.getTile(x,y+1).road is "road"): #to  down
+            pygame.draw.line(DISPLAYSURF, co.BROWN, center, midbottom, line_width)
 
 
 def remake(map : bmap.TileMap):

@@ -3,9 +3,8 @@ Created on Aug 31, 2012
 
 @author: Aaron Kaufman
 '''
-
-from random import randint
-from random import randrange
+import collections
+import heapq
 import math
 import colors as co
 import terrain as ter
@@ -13,7 +12,10 @@ import utils
 from random import choice
 import perlin_noise
 import cProfile
-        
+import graph_tools
+
+
+
 TEMP_MAP = {15:"cold",
                    55:"medium",
                    100:"warm"}
@@ -96,30 +98,48 @@ class TileMap(object):
     def __init__(self, max_x = 50, max_y =50):
         self.islands_x = ISLANDS_X
         self.islands_y = ISLANDS_Y
+
+        #used when we don't have wrapping enabled.
+        self.IMPASSIBLE_TILE = Tile(ter.IMPASSIBLE, -1, -1)
+
         self.polar_bias = POLAR_BIAS
         self.percent_water = PERCENT_WATER
 
         self.max_x = max_x
         self.max_y = max_y
-
-        #Actually builds out the map.  Put in a separate function so that it can be called to
-        #regenerate the map.
-        self.remake()
-
-    def remake(self):
-        '''
-        Constructor
-        '''
+        self.wrap_x = True
+        self.wrap_y = True
         self.xList = []
         for x in range(0, self.max_x):
             yList = []
             self.xList.append(yList)
             for y in range(0, self.max_y):
                 yList.append(Tile(ter.WATER, x, y))
+        #Actually builds out the map.  Put in a separate function so that it can be called to
+        #regenerate the map.
+
+        self.remake()
+
+    def remake(self):
+        '''
+        Constructor
+        '''
+        self.clearMap("water")
         self.makePropertiedHeightMap("height", bias = islandBiasFunction, bias_amplitude = -40)
         self.performWhitakerAlgorithm()
         self.fillWithWater(30)
         self.makeCities(10)
+        self.drawRoadsBetweenCities()
+
+    def drawRoadsBetweenCities(self):
+        contiguous_city_tiles_list = findJoinableCitySets(self)
+        for list in contiguous_city_tiles_list:
+            roads_to_draw = graph_tools.getMinimumSpanningTree(list)
+            for city_pair in roads_to_draw:
+                tile_list = getClosestRoute(self, city_pair[0], city_pair[1])
+                for tile in tile_list:
+                    tile.road = "road"
+
         
     def performWhitakerAlgorithm(self):
         """
@@ -135,8 +155,15 @@ class TileMap(object):
 
 
     def getTile(self, x, y) -> Tile:
-        x = utils.modu(x, self.max_x)
-        y = utils.modu(y, self.max_y)
+        if (self.wrap_x):
+            x = utils.modu(x, self.max_x)
+        if (self.wrap_y):
+            y = utils.modu(y, self.max_y)
+
+        if not (0<=x<self.max_x):
+            return self.IMPASSIBLE_TILE
+        if not (0<=y<self.max_y):
+            return self.IMPASSIBLE_TILE
         return self.xList[x][y]
     
     def __str__(self):
@@ -168,7 +195,6 @@ class TileMap(object):
             x = tile.x
             y = tile.y
 
-
             p_x = x/smoothness
             p_y = y/smoothness
 
@@ -180,8 +206,6 @@ class TileMap(object):
             if bias is not None:
                 assert(bias_amplitude is not None)
                 bias_value = bias(self, tile, bias_amplitude)
-
-
             tile.__setattr__(the_property, gen.interpolate(p_x,p_y) + bias_value)
 
 
@@ -244,9 +268,14 @@ class TileMap(object):
 
 
     def clearMap(self, terrain):
+        """
+        Resets all land to a given terrain and sets the cities and roads to null.  (For use during testing.)
+        """
         tile_list = [self.getTile(x,y) for x in range(0, self.max_x) for y in range(0, self.max_y)]
         for tile in tile_list:
             tile.terrain = terrain
+            tile.city = None
+            tile.road = None
 
     def makeCities(self, num_cities : int):
         land_tiles = [self.getTile(x,y) for x in range(0,self.max_x) for y in range(0, self.max_y)
@@ -292,11 +321,172 @@ def polarBiasFunction(tile_map:TileMap, tile:Tile, amplitude):
     return (equator - math.fabs(equator-tile.y)) / equator * amplitude
 
 
-if __name__ == '__main__':
-    cProfile.run('TileMap(200,200)', )
 
 
 
+
+
+PASSABLE_DICT = {ter.MOUNTAIN : False,
+                 ter.WATER : False,
+                 ter.IMPASSIBLE: False}
+
+def _getPassable(t:Tile):
+    return PASSABLE_DICT.setdefault(t.terrain, True)
+
+
+def findJoinableCitySets(map: TileMap):
+    """
+    #returns a set of cities connected to each other by passable terrain
+    """
+
+    city_tile_set = [map.getTile(x,y) for x in range(0, map.max_x) for y in range(0,map.max_y)
+                     if map.getTile(x,y).city is not None]
+    full_tile_set = [map.getTile(x,y) for x in range(0,map.max_x) for y in range(0,map.max_y)]
+    for tile in full_tile_set:
+        tile._has_been_visited = False
+    previously_encountered_city_tiles = []
+    contiguous_city_list_list = []
+    for city_tile in city_tile_set:
+        if city_tile in previously_encountered_city_tiles:
+            continue
+            #tracks contiguous tiles found for this city_tile_set.
+        #open_set acts as a queue.
+        cont_cities = [] #This is what we'll be "returning" from the loop: each list of contiguous city tiles goes
+        #into the cont_cities list.
+        open_set = collections.deque()
+        open_set.appendleft(city_tile)
+        while (open_set):
+            t = open_set.pop()
+            x=t.x
+            y=t.y
+            if not _getPassable(t):  #don't use this tile if we can't pass it.
+                continue
+            if (True is t._has_been_visited): # don't use this tile if it has been visited.
+                continue
+            else:
+                if (t in open_set):
+                    continue
+                t._has_been_visited = True
+                n = map.getTile(x,y+1)
+                s = map.getTile(x,y-1)
+                e = map.getTile(x+1,y)
+                w = map.getTile(x-1,y)
+                _addTileIfAdmissible(open_set, n)
+                _addTileIfAdmissible(open_set, s)
+                _addTileIfAdmissible(open_set, e)
+                _addTileIfAdmissible(open_set, w)
+                if (t.city is not None):
+                    cont_cities.append(t)
+                    previously_encountered_city_tiles.append(t)
+        contiguous_city_list_list.append(cont_cities)
+    return contiguous_city_list_list
+
+
+def _addTileIfAdmissible(deq:collections.deque, t:Tile):
+    if (_getPassable(t) and not t._has_been_visited):
+        if t not in deq:
+            deq.appendleft(t)
+
+
+
+class _RoadNode(object):
+    """
+    #heuristic refers to linear distance to goal node.
+    #The first node should have a parent of None.
+    #Parent is the node this node was spawned off of; used for ancestry.
+    """
+    def __init__(self, tile : Tile, parent, heuristic):
+        self.tile = tile
+        self.parent = parent
+        self.heuristic = heuristic
+        if parent is not None:
+            if tile.road == "road":
+                self.distance = parent.distance
+            elif tile.road is None:
+                self.distance = parent.distance + 1
+            else:
+                assert False
+        else:
+            self.distance = 0
+
+
+    def getAncestry(self) -> list:
+        nodes = []
+        current = self
+        while current is not None:
+            nodes.append(current.tile)
+            current = current.parent
+        return nodes
+
+    def __lt__(node1,node2):
+
+        return (node1.heuristic + node1.distance) < (node2.heuristic + node2.distance)
+
+
+
+class _AStarNodeMap(object):
+    """
+    #Represents the A-Star algorithm on a tiled map
+    """
+    def __init__(self, map : TileMap, start:Tile, goal:Tile):
+
+        self.start = start
+        self.already_hit = []
+        self.open_set = []
+        heapq.heapify(self.open_set)
+        heapq.heappush(self.open_set, _RoadNode(start, None, 1))
+        self.goal = goal
+        self.map = map
+
+    def getLinearDistanceToGoal(self, x, y) -> int:
+        """
+
+        #Acts as heuristic for A-star algorithm.  Gets distance between given point and the goal.
+        """
+        dx2 = pow(x - self.goal.x, 2)
+        dy2 = pow(y - self.goal.y, 2)
+        return math.sqrt(dx2 + dy2)
+
+
+    def buildAdjacentNodes(self, parent:_RoadNode):
+        """
+        Builds nodes adjacent to the current tile if the current tile is "valid", and adds them to the open set.
+        """
+        x = parent.tile.x
+        y = parent.tile.y
+        n = self.map.getTile(x,y+1)
+        s = self.map.getTile(x,y-1)
+        e = self.map.getTile(x+1,y)
+        w = self.map.getTile(x-1,y)
+
+        new_tiles = [n,s,e,w]
+        for tile in new_tiles:
+            if ((tile.x,tile.y) not in self.already_hit and _getPassable(tile)):
+                heapq.heappush(self.open_set, _RoadNode(tile, parent, self.getLinearDistanceToGoal(tile.x, tile.y)))
+                tup = (tile.x, tile.y)
+                self.already_hit.append(tup)
+
+
+    def getAStarResult(self) -> list:
+        current = _RoadNode(self.start, None, 0)
+        while current.tile is not self.goal:
+            current = heapq.heappop(self.open_set)
+            self.buildAdjacentNodes(current)
+        return current.getAncestry()
+
+def getClosestRoute(map : TileMap, start:Tile, goal:Tile):
+    """
+    Creates an A* node map and retrieves the result.
+    This is for the roadbuilding algorithm--
+    It treats all passable tiles the same,
+    except that it minimizes the total amount of road constructed
+    by re-using existing roads.
+    """
+    node_map = _AStarNodeMap(map,start,goal)
+    return node_map.getAStarResult()
 
 #benchmark: 17 secs with bias function
 #14 without
+
+if __name__ == '__main__':
+    cProfile.run('TileMap(200,200)', )
