@@ -1,8 +1,8 @@
 __author__ = 'Aaron Kaufman'
 
 from pygame import *
-from basicmap import City
-import basicmap as bmap
+from world_map import City
+import world_map as bmap
 import pygame._view
 import pygame.font
 import math
@@ -171,12 +171,6 @@ def brighten(color):
     return (val[0],val[1],val[2])
 
     #Smooths the generated land by filled all water with 3-4 land neighbors as land, and all land with 3-4 water neighbors as water.
-def smoothingAlgorithm(chart : bmap.TileMap):
-    chart.smooth()
-
-
-
-
 
 def main():
     global FPSCLOCK, DISPLAYSURF, BASICFONT

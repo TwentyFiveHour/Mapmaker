@@ -38,7 +38,7 @@ WHITTAKER_MAP = {("wet", "cold"): "tundra",
 
 PERCENT_WATER = 40
 POLAR_BIAS = 60
-
+ISLAND_BIAS = -40
 ISLANDS_X = 1
 ISLANDS_Y = 1
 #Total islands = islands_x * islands_y
@@ -104,7 +104,7 @@ class TileMap(object):
 
         self.polar_bias = POLAR_BIAS
         self.percent_water = PERCENT_WATER
-
+        self.smoothness = 10
         self.max_x = max_x
         self.max_y = max_y
         self.wrap_x = True
@@ -115,21 +115,19 @@ class TileMap(object):
             self.xList.append(yList)
             for y in range(0, self.max_y):
                 yList.append(Tile(ter.WATER, x, y))
-        #Actually builds out the map.  Put in a separate function so that it can be called to
-        #regenerate the map.
 
-        self.remake()
 
     def remake(self):
         '''
-        Constructor
+        Builds out the map.
         '''
         self.clearMap("water")
-        self.makePropertiedHeightMap("height", bias = islandBiasFunction, bias_amplitude = -40)
+        self.makePropertiedHeightMap("height", smoothness = self.smoothness, bias = islandBiasFunction, bias_amplitude = ISLAND_BIAS)
         self.performWhitakerAlgorithm()
         self.fillWithWater(30)
         self.makeCities(10)
         self.drawRoadsBetweenCities()
+
 
     def drawRoadsBetweenCities(self):
         contiguous_city_tiles_list = findJoinableCitySets(self)
@@ -145,9 +143,9 @@ class TileMap(object):
         """
         Creates maps of temperature and rainfall, and uses those to dictate terrain types.
         """
-        self.makePropertiedHeightMap("temperature", smoothness = 20, bias = polarBiasFunction, bias_amplitude = 80)
+        self.makePropertiedHeightMap("temperature", smoothness = self.smoothness, bias = polarBiasFunction, bias_amplitude = POLAR_BIAS)
         self.declareEffectiveProperties("temperature",TEMP_MAP,"temp_string")
-        self.makePropertiedHeightMap("rainfall", smoothness = 20)
+        self.makePropertiedHeightMap("rainfall", smoothness = self.smoothness)
         self.declareEffectiveProperties("rainfall",RAIN_MAP,"rain_string")
         for tile in (self.getTile(x, y) for x in range(0,self.max_x) for y in range(0, self.max_y)):
             tup = (tile.rain_string, tile.temp_string)
@@ -177,18 +175,19 @@ class TileMap(object):
         
 
 
-    def makePropertiedHeightMap(self, the_property, smoothness = 10, wrap_x = False, wrap_y = False, bias = None, bias_amplitude = None):
+    def makePropertiedHeightMap(self, the_property, smoothness, bias = None, bias_amplitude = None):
         """
         #This is a method to create a height map on the tilemap with any property,
         # using perlin noise.
         #(Ex: the_property can be "height", "temperature", or anything else.)
         #This new property is placed into the attributes of each tile with the new value.
         #"Smoothness" defines how many tiles exist between two perlin noise spikes.
+        "Bias" refers to a function that can modify the resulting height according to the tile's spatial location.
+        "Bias_amplitude" refers to how much of an impact this will have on the resulting heightmap.
 
         """
-        grid_size_x = math.floor(self.max_x/smoothness)
-        grid_size_y = math.floor(self.max_y/smoothness)
-        gen = perlin_noise.perlinNoiseGenerator()
+
+        gen = self.buildPerlinNoiseGenerator(smoothness)
 
         tiles_list = [self.getTile(x,y) for x in range(0,self.max_x) for y in range(0, self.max_y)]
         for tile in tiles_list:
@@ -198,19 +197,36 @@ class TileMap(object):
             p_x = x/smoothness
             p_y = y/smoothness
 
-            #if (wrap_x):
-            #    p_x = utils.modu(p_x, grid_size_x)
-            #if (wrap_y):
-            #    p_y = utils.modu(p_y, grid_size_y)
+#            if (self.wrap_x):
+ #               p_x = utils.modu(p_x, grid_size_x)
+  #          if (self.wrap_y):
+   #             p_y = utils.modu(p_y, grid_size_y)
             bias_value = 0
             if bias is not None:
                 assert(bias_amplitude is not None)
                 bias_value = bias(self, tile, bias_amplitude)
-            tile.__setattr__(the_property, gen.interpolate(p_x,p_y) + bias_value)
+            else:
+                assert(bias_amplitude is None)
+            value = gen.interpolate(p_x,p_y) + bias_value
+            tile.__setattr__(the_property, value)
 
 
 
+    def buildPerlinNoiseGenerator(self, smoothness) -> perlin_noise.perlinNoiseGenerator:
+        """
+        Creates a perlin noise generator fitting the requirements of this world map.
+        """
+        grid_size_x = math.ceil(self.max_x/smoothness) - 1
+        grid_size_y = math.ceil(self.max_y/smoothness) - 1
+        if (grid_size_x < 1):
+            grid_size_x = 1
+        if (grid_size_y < 1):
+            grid_size_y = 1
 
+        gen = perlin_noise.perlinNoiseGenerator()
+        gen.wrap_x = grid_size_x
+        gen.wrap_y = grid_size_y
+        return gen
 
     def declareEffectiveProperties(self, property_name, percentile_to_title, title_name):
         """
@@ -293,7 +309,7 @@ class TileMap(object):
 #And be reasonably efficient, as they are called for every tile.
 
 
-def islandBiasFunction(tile_map:TileMap, tile:Tile, amplitude):
+def islandBiasFunction(tile_map:TileMap, tile:Tile, amplitude = ISLAND_BIAS):
     """
     returns a higher value at the center of the map, and a  lower value at the edges.
     Creates a number of elevated points equal to the value of (num_hills_x * num_hills_y)
@@ -313,7 +329,7 @@ def islandBiasFunction(tile_map:TileMap, tile:Tile, amplitude):
     cos_result_y = -math.cos(y/max_y * num_hills_y * 2 * math.pi)*amplitude
     return (cos_result_x + cos_result_y)/2
 
-def polarBiasFunction(tile_map:TileMap, tile:Tile, amplitude):
+def polarBiasFunction(tile_map:TileMap, tile:Tile, amplitude = POLAR_BIAS):
     """
     #Causes cold temperatures at poles, and warm temps at the equator (assuming amplitude is positive).
     """
@@ -437,6 +453,7 @@ class _AStarNodeMap(object):
         heapq.heappush(self.open_set, _RoadNode(start, None, 1))
         self.goal = goal
         self.map = map
+
 
     def getLinearDistanceToGoal(self, x, y) -> int:
         """

@@ -9,7 +9,7 @@ class perlinNoiseGenerator(object):
 
 
 
-    def __init__(self, amplitude : tuple = (0,100), wrap_x : int = -1, wrap_y : int = -1, seed = None):
+    def __init__(self):
         """
         #Size tuple refers to the number of points directly created by the noise function in the X and Y directions,
         #respectively.
@@ -17,20 +17,18 @@ class perlinNoiseGenerator(object):
         #seed determines a specific random seed.
         #wrap defines after how many points the heightmap starts repeating.
         """
-        if seed is None:
-            self.seed = random.random()
-        else:
-            self.seed = seed
-        self.wrap_x = wrap_x
-        self.wrap_y = wrap_y
+        self.seed = random.random()
+
+        self.wrap_x = None
+        self.wrap_y = None
 
 
-        self.lower_bound, self.upper_bound = amplitude
+        self.lower_bound, self.upper_bound = 0,100
 
 
 
     @memo
-    def noise2d(self, x : int, y : int, bias = 0):
+    def noise2d(self, x : int, y : int):
         """
         #Note: If random seed changes, we have an ENTIRELY new map.
         #Gets our noise function for a given coordinate.  MUST be an integer.
@@ -38,13 +36,14 @@ class perlinNoiseGenerator(object):
         #Returns a result that is between the lower and upper bounds of the amplitude.
         """
 
-        if (self.wrap_x > 0):
+        if (self.wrap_x is not None):
             x = utils.modu(x, self.wrap_x)
-        if (self.wrap_y > 0):
+        if (self.wrap_y is not None):
             y = utils.modu(y, self.wrap_y)
 
         random.seed('' + str(x) + 'x' + str(y) + 'y' + str(self.seed))
-        return random.random()* (self.upper_bound-self.lower_bound) + self.lower_bound
+        noise = random.random()* (self.upper_bound-self.lower_bound) + self.lower_bound
+        return noise
 
     def generateNewSeed(self):
         self.seed = random.random
@@ -69,7 +68,6 @@ class perlinNoiseGenerator(object):
 
         ease_x = self.easeFunction(ceil_x - x)
         ease_y = self.easeFunction(ceil_y - y)
-
         noise_top_1 = ease_x * self.noise2d(*c)
         noise_top_2 = (1-ease_x) * self.noise2d(*d)
         noise_top = noise_top_1 + noise_top_2
