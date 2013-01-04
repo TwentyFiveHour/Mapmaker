@@ -216,8 +216,8 @@ class TileMap(object):
         """
         Creates a perlin noise generator fitting the requirements of this world map.
         """
-        grid_size_x = math.ceil(self.max_x/smoothness) - 1
-        grid_size_y = math.ceil(self.max_y/smoothness) - 1
+        grid_size_x = self.max_x/smoothness
+        grid_size_y = self.max_y/smoothness
         if (grid_size_x < 1):
             grid_size_x = 1
         if (grid_size_y < 1):
@@ -235,7 +235,7 @@ class TileMap(object):
         #Ex:  99 percentile covers the top 99% of the map.
         #title refers to the name of the property given to the tile.
         #property refers to the field that the title is derived from.
-        For example, the property could be temperature, and that could correspond to the titles
+        For example, the property could be temperature, and that could correspond to the titles ("title_name")
         "warm", "cold", or "medium" depending on percentile.
         """
         flattened_tile_list = [self.getTile(x,y) for x in range(0, self.max_x) for y in range(0, self.max_y)]
@@ -460,9 +460,8 @@ class _AStarNodeMap(object):
 
         #Acts as heuristic for A-star algorithm.  Gets distance between given point and the goal.
         """
-        dx2 = pow(x - self.goal.x, 2)
-        dy2 = pow(y - self.goal.y, 2)
-        return math.sqrt(dx2 + dy2)
+        map = self.map
+        return utils.getLinearDistance(Tile("placeholder",x,y), self.goal, map.max_x, map.max_y, map.wrap_x, map.wrap_y)
 
 
     def buildAdjacentNodes(self, parent:_RoadNode):
