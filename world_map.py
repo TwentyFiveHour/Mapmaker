@@ -3,6 +3,7 @@ Created on Aug 31, 2012
 
 @author: Aaron Kaufman
 '''
+import city
 import collections
 import heapq
 import math
@@ -13,7 +14,7 @@ from random import choice
 import perlin_noise
 import cProfile
 import graph_tools
-
+import basic_map
 
 
 TEMP_MAP = {15:"cold",
@@ -47,74 +48,21 @@ LAND="land"
 WATER_DICT = {"water" : ter.WATER}
 WATER_DICT.setdefault(LAND)
 
-class Tile(object):
-    '''
-    classdocs
-    This represents a tile.
-    Tiles have an associated Continent and an associated TerrainType.
-    '''
 
 
-    def __init__(self, terrain, x, y):
-        '''
-        Constructor
-        '''
-
-        self.road = None
-        self.terrain = terrain
-        self.x = x
-        self.y = y
-        self.height = 0
-        self.sort_key = 0
-        self.city = None
-        assert(self.city is City or self.city is None)
-    def __str__(self):
-        if self.city is  not None:
-            return self.city
-        else:
-            return self.terrain
-    def __repr__(self):
-        return ("[Terrain: "+self.terrain+" coords : " + str(self.x) + ", " + str(self.y) + "]")
-
-
-    def getProperty(self, property_name):
-        return self.__getattribute__(property_name)
-
-    def getSortKey(self):
-        return self.sort_key
-
-
-
-
-
-class City(object):
-
-    def get_pic(self):
-        return 'images/b_rook.png'
-
-
-class TileMap(object):
+class WorldMap( basic_map.TileMap):
 
     def __init__(self, max_x = 50, max_y =50):
+        basic_map.TileMap.__init__(self, max_x, max_y)
         self.islands_x = ISLANDS_X
         self.islands_y = ISLANDS_Y
-
-        #used when we don't have wrapping enabled.
-        self.IMPASSIBLE_TILE = Tile(ter.IMPASSIBLE, -1, -1)
-
         self.polar_bias = POLAR_BIAS
         self.percent_water = PERCENT_WATER
+        #used when we don't have wrapping enabled.
+        self.IMPASSIBLE_TILE = basic_map.Tile(ter.IMPASSIBLE, -1, -1)
         self.smoothness = 10
-        self.max_x = max_x
-        self.max_y = max_y
-        self.wrap_x = True
-        self.wrap_y = True
-        self.xList = []
-        for x in range(0, self.max_x):
-            yList = []
-            self.xList.append(yList)
-            for y in range(0, self.max_y):
-                yList.append(Tile(ter.WATER, x, y))
+
+
 
 
     def remake(self):
@@ -138,7 +86,7 @@ class TileMap(object):
                 for tile in tile_list:
                     tile.road = "road"
 
-        
+
     def performWhitakerAlgorithm(self):
         """
         Creates maps of temperature and rainfall, and uses those to dictate terrain types.
@@ -152,7 +100,7 @@ class TileMap(object):
             tile.terrain = WHITTAKER_MAP[tup]
 
 
-    def getTile(self, x, y) -> Tile:
+    def getTile(self, x, y) -> basic_map.Tile:
         if (self.wrap_x):
             x = utils.modu(x, self.max_x)
         if (self.wrap_y):
@@ -163,7 +111,7 @@ class TileMap(object):
         if not (0<=y<self.max_y):
             return self.IMPASSIBLE_TILE
         return self.xList[x][y]
-    
+
     def __str__(self):
         temp = ''
         for x in range(self.max_x):
@@ -171,8 +119,8 @@ class TileMap(object):
                 temp = temp + str(self.getTile(x, y))
             temp = temp + '\n'
         return temp
-        
-        
+
+
 
 
     def makePropertiedHeightMap(self, the_property, smoothness, bias = None, bias_amplitude = None):
@@ -240,13 +188,13 @@ class TileMap(object):
         """
         flattened_tile_list = [self.getTile(x,y) for x in range(0, self.max_x) for y in range(0, self.max_y)]
         for tile in flattened_tile_list:
-            
+
             tile.sort_key = tile.__getattribute__(property_name)
-        
+
         key_list = percentile_to_title.keys()
         key_list = sorted(key_list)
-        
-        flattened_tile_list.sort(key = Tile.getSortKey, reverse = False)
+
+        flattened_tile_list.sort(key = basic_map.Tile.getSortKey, reverse = False)
         current = 0
         for tile in flattened_tile_list:
             if len(key_list)==0:
@@ -258,14 +206,14 @@ class TileMap(object):
             tile.__setattr__(title_name, percentile_to_title.get(key_list[0]))
 
 
-    
+
     def fillWithWater(self, percent_ter):
         flattened_tile_list = [self.getTile(x,y) for x in range(0, self.max_x) for y in range(0, self.max_y)]
         for tile in flattened_tile_list:
             tile.sort_key = tile.height
-        
-        
-        flattened_tile_list.sort(key = Tile.getSortKey, reverse = False)
+
+
+        flattened_tile_list.sort(key = basic_map.Tile.getSortKey, reverse = False)
         count=0
         for tile in flattened_tile_list:
             count+=1
@@ -298,7 +246,7 @@ class TileMap(object):
                       if WATER_DICT.get(self.getTile(x,y).terrain, LAND) == LAND]
         city_tiles = [choice(land_tiles) for x in range (0,num_cities)]
         for tile in city_tiles:
-            tile.city = City()
+            tile.city = city.City()
 
 
 
@@ -309,7 +257,7 @@ class TileMap(object):
 #And be reasonably efficient, as they are called for every tile.
 
 
-def islandBiasFunction(tile_map:TileMap, tile:Tile, amplitude = ISLAND_BIAS):
+def islandBiasFunction(tile_map:WorldMap, tile:basic_map.Tile, amplitude = ISLAND_BIAS):
     """
     returns a higher value at the center of the map, and a  lower value at the edges.
     Creates a number of elevated points equal to the value of (num_hills_x * num_hills_y)
@@ -329,7 +277,7 @@ def islandBiasFunction(tile_map:TileMap, tile:Tile, amplitude = ISLAND_BIAS):
     cos_result_y = -math.cos(y/max_y * num_hills_y * 2 * math.pi)*amplitude
     return (cos_result_x + cos_result_y)/2
 
-def polarBiasFunction(tile_map:TileMap, tile:Tile, amplitude = POLAR_BIAS):
+def polarBiasFunction(tile_map:WorldMap, tile:basic_map.Tile, amplitude = POLAR_BIAS):
     """
     #Causes cold temperatures at poles, and warm temps at the equator (assuming amplitude is positive).
     """
@@ -339,18 +287,15 @@ def polarBiasFunction(tile_map:TileMap, tile:Tile, amplitude = POLAR_BIAS):
 
 
 
-
-
-
 PASSABLE_DICT = {ter.MOUNTAIN : False,
                  ter.WATER : False,
                  ter.IMPASSIBLE: False}
 
-def _getPassable(t:Tile):
+def _getPassable(t:basic_map.Tile):
     return PASSABLE_DICT.setdefault(t.terrain, True)
 
 
-def findJoinableCitySets(map: TileMap):
+def findJoinableCitySets(map: WorldMap):
     """
     #returns a set of cities connected to each other by passable terrain
     """
@@ -398,7 +343,7 @@ def findJoinableCitySets(map: TileMap):
     return contiguous_city_list_list
 
 
-def _addTileIfAdmissible(deq:collections.deque, t:Tile):
+def _addTileIfAdmissible(deq:collections.deque, t: basic_map.Tile):
     if (_getPassable(t) and not t._has_been_visited):
         if t not in deq:
             deq.appendleft(t)
@@ -411,7 +356,7 @@ class _RoadNode(object):
     #The first node should have a parent of None.
     #Parent is the node this node was spawned off of; used for ancestry.
     """
-    def __init__(self, tile : Tile, parent, heuristic):
+    def __init__(self, tile : basic_map.Tile, parent, heuristic):
         self.tile = tile
         self.parent = parent
         self.heuristic = heuristic
@@ -444,7 +389,7 @@ class _AStarNodeMap(object):
     """
     #Represents the A-Star algorithm on a tiled map
     """
-    def __init__(self, map : TileMap, start:Tile, goal:Tile):
+    def __init__(self, map : WorldMap, start:basic_map.Tile, goal:basic_map.Tile):
 
         self.start = start
         self.already_hit = []
@@ -461,7 +406,7 @@ class _AStarNodeMap(object):
         #Acts as heuristic for A-star algorithm.  Gets distance between given point and the goal.
         """
         map = self.map
-        return utils.getLinearDistance(Tile("placeholder",x,y), self.goal, map.max_x, map.max_y, map.wrap_x, map.wrap_y)
+        return utils.getLinearDistance(basic_map.Tile("placeholder",x,y), self.goal, map.max_x, map.max_y, map.wrap_x, map.wrap_y)
 
 
     def buildAdjacentNodes(self, parent:_RoadNode):
@@ -490,7 +435,7 @@ class _AStarNodeMap(object):
             self.buildAdjacentNodes(current)
         return current.getAncestry()
 
-def getClosestRoute(map : TileMap, start:Tile, goal:Tile):
+def getClosestRoute(map : WorldMap, start: basic_map.Tile, goal: basic_map.Tile):
     """
     Creates an A* node map and retrieves the result.
     This is for the roadbuilding algorithm--

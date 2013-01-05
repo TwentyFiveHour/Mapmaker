@@ -5,6 +5,7 @@ import unittest as test
 import perlin_noise
 import math
 import utils
+import basic_map
 
 
 #Python unit test for graph_tools.py!
@@ -13,31 +14,31 @@ world_map.ISLAND_BIAS = 0 #Don't want them interfering with my measurements.
 
 class utils_test(test.TestCase):
     def test_linear_distance_to_goal(self):
-        t1 = world_map.Tile("",0,0)
-        t2 = world_map.Tile("",9,0)
+        t1 = basic_map.Tile("",0,0)
+        t2 = basic_map.Tile("",9,0)
         max_x = 10
         max_y = 10
 
         test_distance = utils.getLinearDistance(t1,t2,max_x,max_y, True, True)
         self.assertEqual(test_distance, 1)
 
-        t3 = world_map.Tile("",0,0)
-        t4 = world_map.Tile("",0,9)
+        t3 = basic_map.Tile("",0,0)
+        t4 = basic_map.Tile("",0,9)
         test_distance = utils.getLinearDistance(t3,t4,max_x,max_y, True, True)
         self.assertEqual(test_distance, 1)
 
-        t5 = world_map.Tile("",0,0)
-        t6 = world_map.Tile("",0,4)
+        t5 = basic_map.Tile("",0,0)
+        t6 = basic_map.Tile("",0,4)
         test_distance = utils.getLinearDistance(t5,t6,max_x,max_y, True, True)
         self.assertEqual(test_distance, 4)
 
-        t7 = world_map.Tile("",0,0)
-        t8 = world_map.Tile("",0,5)
+        t7 = basic_map.Tile("",0,0)
+        t8 = basic_map.Tile("",0,5)
         test_distance = utils.getLinearDistance(t7,t8,max_x,max_y, True, True)
         self.assertEqual(test_distance, 5)
 
-        t9 = world_map.Tile("",0,0)
-        t10 = world_map.Tile("",0,0)
+        t9 = basic_map.Tile("",0,0)
+        t10 = basic_map.Tile("",0,0)
         test_distance = utils.getLinearDistance(t9,t10,max_x,max_y, True, True)
         self.assertEqual(test_distance, 0)
 
@@ -53,7 +54,7 @@ class test_world_wrap(test.TestCase):
         self.assertAlmostEqual(gen.interpolate(1.5,0), gen.interpolate(1.5,3))
 
     def test_map_gen(self):
-        map = world_map.TileMap(80,20)
+        map = world_map.WorldMap(80,20)
         map.wrap_x = True
         map.wrap_y = True
         map.smoothness = 10
@@ -72,7 +73,7 @@ class test_road_builder(test.TestCase):
     def test_complex_a_star_validity(self):
 
         #now:  We need to test our A* algorithm on a more complex route, requiring routing around obstacles.
-        map = world_map.TileMap(10,10)
+        map = world_map.WorldMap(10,10)
         map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
@@ -102,7 +103,7 @@ class test_road_builder(test.TestCase):
 
 
     def test_a_star_correctness(self):
-        map = world_map.TileMap(7,7)
+        map = world_map.WorldMap(7,7)
         map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
@@ -142,7 +143,7 @@ class test_road_builder(test.TestCase):
     def test_simple_a_star(self):
         #Now, a test of the AStarNodeMap in the most basic case.
 
-        map = world_map.TileMap(10,10)
+        map = world_map.WorldMap(10,10)
         map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
@@ -167,7 +168,7 @@ class test_road_builder(test.TestCase):
         #FIRST:  Contiguous city tile test.
         #Question asked: Does our algorithm properly determine what cities are connectable in the most basic case?
 
-        map = world_map.TileMap(4,4)
+        map = world_map.WorldMap(4,4)
         map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
@@ -195,7 +196,7 @@ class test_road_builder(test.TestCase):
                 num_groups+=1
 
     def test_road_building(self):
-        map = world_map.TileMap(10,10)
+        map = world_map.WorldMap(10,10)
         map.clearMap('water')
         map.getTile(0,0).city = 'B'
         map.getTile(0,0).terrain = 'grass'
@@ -280,9 +281,9 @@ class test_perlin_noise(test.TestCase):
 
 class test_spanning_tree_generation(test.TestCase):
     def test_basic_tree(self):
-        t1 = world_map.Tile('grass', 1,3)
-        t2 = world_map.Tile('grass', 2,10)
-        t3 = world_map.Tile('grass', 2,5)
+        t1 = basic_map.Tile('grass', 1,3)
+        t2 = basic_map.Tile('grass', 2,10)
+        t3 = basic_map.Tile('grass', 2,5)
 
         tiles = [t1,t2,t3]
         spanning_tree = graph_tools.getMinimumSpanningTree(tiles)
@@ -291,12 +292,12 @@ class test_spanning_tree_generation(test.TestCase):
         self.assertTrue(not hasPairTuple(t1, t2, spanning_tree), str(spanning_tree))
 
     def test_large_tree(self):
-        t1 = world_map.Tile('grass', 1,3)
-        t2 = world_map.Tile('grass', 2,10)
-        t3 = world_map.Tile('grass', 2,5)
-        t4 = world_map.Tile('grass', 3,15)
-        t5 = world_map.Tile('grass', 2.1,20)
-        t6 = world_map.Tile('grass', 2.5,35)
+        t1 = basic_map.Tile('grass', 1,3)
+        t2 = basic_map.Tile('grass', 2,10)
+        t3 = basic_map.Tile('grass', 2,5)
+        t4 = basic_map.Tile('grass', 3,15)
+        t5 = basic_map.Tile('grass', 2.1,20)
+        t6 = basic_map.Tile('grass', 2.5,35)
 
         tiles = [t1,t2,t3,t4,t5,t6]
         spanning_tree = graph_tools.getMinimumSpanningTree(tiles)
