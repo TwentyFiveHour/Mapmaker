@@ -6,11 +6,35 @@ import perlin_noise
 import math
 import utils
 import basic_map
-
+import cellular_automata as ca
 
 #Python unit test for graph_tools.py!
 world_map.POLAR_BIAS = 0
 world_map.ISLAND_BIAS = 0 #Don't want them interfering with my measurements.
+
+class cellular_automata_test(test.TestCase):
+    def test_cellular_automata(self):
+        b = [x for x in range(0,20)]
+        s = []
+        map = basic_map.TileMap(5,5)
+        gen = ca.CellularAutomataGenerator(b,s,map)
+        gen.clearSimulation(ca.DEAD)
+        gen.run()
+        for tile in map.getAllTiles():
+            self.assertTrue(tile._state == ca.ALIVE)
+        gen.run()
+        for tile in map.getAllTiles():
+            self.assertTrue(tile._state == ca.DEAD)
+        gen.b = []
+        gen.run()
+        for tile in map.getAllTiles():
+            self.assertTrue(tile._state == ca.DEAD)
+        state_to_terrain = {ca.DEAD : "rock", ca.ALIVE : "floor"}
+        gen.finalizeMap(state_to_terrain)
+        for tile in map.getAllTiles():
+            self.assertTrue(tile.terrain == "rock")
+        gen.printSimulation()
+
 
 class utils_test(test.TestCase):
     def test_linear_distance_to_goal(self):
