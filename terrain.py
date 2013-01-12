@@ -16,24 +16,24 @@ SNOW = 'snow'
 DESERT ='desert'
 TUNDRA = 'tundra'
 FOREST = 'forest'
-SWAMP = 'swamp'
+SWAMP = 'taiga'
 RAINFOREST = 'rainforest'
 #This is impassible terrain.
 IMPASSIBLE = 'impassible'
 
-nameToColor = {}
-nameToColor[GRASS] = c.GRASSLAND
-nameToColor[PLAINS] = c.PLAINS
-nameToColor[MOUNTAIN] = c.MOUNTAIN
-nameToColor[WATER] = c.WATER
-nameToColor[LAVA] = c.LAVA
-nameToColor[DARKWATER] = c.DARKWATER
-nameToColor[SNOW] = c.SNOW
-nameToColor[DESERT] = c.DESERT
-nameToColor[FOREST] = c.FOREST
-nameToColor[RAINFOREST] = c.RAINFOREST
-nameToColor[TUNDRA]= c.TUNDRA
-nameToColor[SWAMP] = c.SWAMP
+NAME_TO_COLOR = {}
+NAME_TO_COLOR[GRASS] = c.GRASSLAND
+NAME_TO_COLOR[PLAINS] = c.PLAINS
+#NAME_TO_COLOR[MOUNTAIN] = c.MOUNTAIN
+NAME_TO_COLOR[WATER] = c.WATER
+NAME_TO_COLOR[LAVA] = c.LAVA
+#NAME_TO_COLOR[DARKWATER] = c.DARKWATER
+NAME_TO_COLOR[SNOW] = c.SNOW
+NAME_TO_COLOR[DESERT] = c.DESERT
+NAME_TO_COLOR[FOREST] = c.FOREST
+NAME_TO_COLOR[RAINFOREST] = c.RAINFOREST
+NAME_TO_COLOR[TUNDRA]= c.TUNDRA
+NAME_TO_COLOR[SWAMP] = c.SWAMP
 
 
         

@@ -25,15 +25,15 @@ RAIN_MAP = {33:"wet",
                 66: "medium",
                 100: "dry"}
 
-WHITTAKER_MAP = {("wet", "cold"): "tundra",
-                 ("medium","cold"): "tundra",
-                 ("dry","cold"):  "tundra",
-                 ("wet", "medium"): "swamp",
-                 ("medium","medium"): "forest",
-                 ("dry","medium"): "grass",
-                 ("wet", "warm"): "rainforest",
-                 ("medium", "warm"):  "plains",
-                 ("dry", "warm"):  "desert"}
+WHITTAKER_MAP = {("wet", "cold"): ter.TUNDRA,
+                 ("medium","cold"): ter.TUNDRA,
+                 ("dry","cold"):  ter.TUNDRA,
+                 ("wet", "medium"): ter.SWAMP,
+                 ("medium","medium"): ter.FOREST,
+                 ("dry","medium"): ter.GRASS,
+                 ("wet", "warm"): ter.RAINFOREST,
+                 ("medium", "warm"):  ter.PLAINS,
+                 ("dry", "warm"):  ter.DESERT}
 
 #Terrain generation parameters
 

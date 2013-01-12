@@ -1,5 +1,7 @@
 __author__ = 'Aaron Kaufman'
 import basic_map
+import random
+import math
 
 DEAD = "dead"
 ALIVE = "alive"
@@ -14,12 +16,14 @@ class CellularAutomataGenerator:
         self.initial_map = initial_map
         self.max_x = initial_map.max_x
         self.max_y = initial_map.max_y
+        self.clearSimulation(DEAD)
 
 
     def run(self, num_turns = 1):
         """
         """
-        self.runSimulation()
+        for _ in range(0,num_turns):
+            self.runSimulation()
 
     def runSimulation(self):
         tiles = [ self.initial_map.getTile(x,y) for x in range (0, self.max_x) for y in range(0, self.max_y)]
@@ -70,3 +74,19 @@ class CellularAutomataGenerator:
             for y in x_list:
                 p.join(str(y) + " : ")
             print(p)
+
+
+    def randomizeInitialConditions(self, fraction_alive):
+        """
+        fraction_alive: a number between 0 and 1, 1 indicating that all cells are alive,
+        and 0 indicating that all cells are dead.
+        """
+        num_tiles = math.floor(self.max_x * self.max_y * fraction_alive)
+        all_tiles = self.initial_map.getAllTiles()
+
+
+        for _ in range(0,num_tiles):
+            current = random.choice(all_tiles)
+            all_tiles.remove(current)
+            current._state = ALIVE
+

@@ -68,24 +68,37 @@ class Button(object):
         current_rect.topleft = (self.x_start, self.y_start + self.max_y/2)
         DISPLAYSURF.blit(rendered_text, current_rect)
 
-
-
-def paintControls(rendered_control_text: list, right_bounds : int, spacer : int):
+def createButtonList( right_bounds : int):
     start_y = 200
     start_x = right_bounds
     width = 100
     height = 50
     box = start_x, start_y, width, height
     list = [Button(command, command.__name__, box) for command in KEYSTOFUNCTION.values()]
+    for button in list:
+        BUTTON_LIST.append(button)
+
+def paintControls():
 
     i=0
-    for button in list:
+    for button in BUTTON_LIST:
         assert(isinstance(button, Button))
         button.y_start += (button.max_y + 10)*i
         i+=1
         button.drawSelf()
-        BUTTON_LIST.append(button)
 
+def paintLegend(dictionary : dict, right_bounds : int, spacer: int):
+    start_y = 250 + len(BUTTON_LIST) * 50
+    start_x = right_bounds
+    start_rectangle_x = right_bounds + 70
+    key_list = [key for key in terrain.NAME_TO_COLOR.keys()]
+    for key in key_list:
+        pygame.draw.rect(DISPLAYSURF, terrain.NAME_TO_COLOR[key], pygame.Rect(start_rectangle_x, start_y, 10, 10))
+        rendered_text = BASICFONT.render(str(key) + " : ", True, co.WHITE)
+        current_rect = rendered_text.get_rect()
+        current_rect.topleft = (start_x, start_y)
+        DISPLAYSURF.blit(rendered_text, current_rect)
+        start_y += 20
 
 
 def paintMap(tile_map : world_map.WorldMap):
@@ -99,7 +112,8 @@ def paintMap(tile_map : world_map.WorldMap):
     controls_to_display = [BASICFONT.render((KEYSTOFUNCTION[control].__name__), True, co.WHITE)
                            for (control) in KEYSTOFUNCTION.keys()]
 
-    paintControls(controls_to_display, right_bounds, spacer)
+    paintControls()
+    paintLegend(terrain.NAME_TO_COLOR, right_bounds, spacer)
 
     pygame.display.update()
     while (True):
@@ -114,9 +128,9 @@ def paintTile(tile : bmap.Tile, tile_size : int, map : world_map.WorldMap):
     x = tile.x * tile_size
     y = tile.y * tile_size
     tile_rect = pygame.Rect(x, y, tile_size, tile_size)
-    pygame.draw.rect(DISPLAYSURF, terrain.nameToColor[tile.terrain], tile_rect)
+    pygame.draw.rect(DISPLAYSURF, terrain.NAME_TO_COLOR[tile.terrain], tile_rect)
     #Now, draw inner tile in a slightly lighter colour.
-    lighterColor = brighten(terrain.nameToColor[tile.terrain])
+    lighterColor = brighten(terrain.NAME_TO_COLOR[tile.terrain])
     lighterRect = pygame.Rect(x + 2, y + 2 , tile_size - 4, tile_size - 4)
     pygame.draw.rect(DISPLAYSURF, lighterColor, lighterRect)
 
@@ -184,17 +198,14 @@ def main():
     global KEYSTOFUNCTION
     KEYSTOFUNCTION = {K_r : remake}
 
-
-
-
-
     chart = world_map.WorldMap(50, 50)
 
+    tile_size = math.floor(min(WINDOWHEIGHT/chart.max_y, WINDOWWIDTH/chart.max_x))
 
+    right_bounds = tile_size * chart.max_x
 
+    createButtonList(right_bounds)
     paintMap(chart)
-    print('Bam!')
-
 
 
 

@@ -13,7 +13,15 @@ world_map.POLAR_BIAS = 0
 world_map.ISLAND_BIAS = 0 #Don't want them interfering with my measurements.
 
 class cellular_automata_test(test.TestCase):
-    def test_cellular_automata(self):
+
+    def test_randomize_function(self):
+        map = basic_map.TileMap(10,10)
+        gen = ca.CellularAutomataGenerator([],[],map)
+        gen.randomizeInitialConditions(.6)
+        self.assertTrue(len([tile for tile in map.getAllTiles() if tile._state == ca.ALIVE])
+                        == 60)
+
+    def test_cellular_automata_extremes(self):
         b = [x for x in range(0,20)]
         s = []
         map = basic_map.TileMap(5,5)
@@ -35,6 +43,30 @@ class cellular_automata_test(test.TestCase):
             self.assertTrue(tile.terrain == "rock")
         gen.printSimulation()
 
+    def test_cellular_automata_ordinary(self):
+        b = [3]
+        s = [2,3]
+        map = basic_map.TileMap(9,9)
+        gen = ca.CellularAutomataGenerator(b,s,map)
+        gen.clearSimulation(ca.DEAD)
+        living_tiles = [map.getTile(3,3), map.getTile(2,3), map.getTile(4,3)]
+        for tile in living_tiles:
+            tile._state = ca.ALIVE
+        gen.run()
+        self.assertTrue(map.getTile(3,3)._state == ca.ALIVE)
+        self.assertTrue(map.getTile(3,4)._state == ca.ALIVE)
+        self.assertTrue(map.getTile(3,2)._state == ca.ALIVE)
+
+        self.assertTrue(map.getTile(4,3)._state == ca.DEAD)
+        self.assertTrue(map.getTile(2,3)._state == ca.DEAD)
+
+        gen.run(2) #should end with the same state it started in.
+        self.assertTrue(map.getTile(3,3)._state == ca.ALIVE)
+        self.assertTrue(map.getTile(3,4)._state == ca.ALIVE)
+        self.assertTrue(map.getTile(3,2)._state == ca.ALIVE)
+
+        self.assertTrue(map.getTile(4,3)._state == ca.DEAD)
+        self.assertTrue(map.getTile(2,3)._state == ca.DEAD)
 
 class utils_test(test.TestCase):
     def test_linear_distance_to_goal(self):
