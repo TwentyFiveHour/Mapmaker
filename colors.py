@@ -1,3 +1,5 @@
+import struct
+
 __author__ = 'Aaron Kaufman'
 WHITE     = (255, 255, 255)
 BLACK     = (  0,   0,   0)
@@ -23,3 +25,10 @@ FOREST = (20,100,20)
 
 BGCOLOR = BLACK
 BROWN = (139,69,19)
+
+
+
+def rgbToHex(rgb):
+    return '#%02x%02x%02x' % rgb
+
+rgbToHex(BROWN)

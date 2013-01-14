@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import game_map
+import game_state
 import math
 import terrain
 import colors
@@ -28,27 +28,38 @@ def main():
     label['textvariable'] = resultsContents
     resultsContents.set('View Type')
 
-    above_ground = ttk.Radiobutton(info_frame, text='Above Ground', variable=view_level, value=game_map.ABOVE_GROUND)
-    below_ground = ttk.Radiobutton(info_frame, text='Under Ground', variable=view_level, value=game_map.BELOW_GROUND)
-    view_level.set(game_map.ABOVE_GROUND)
+    above_ground = ttk.Radiobutton(info_frame, text='Above Ground', variable=view_level, value=game_state.ABOVE_GROUND)
+    below_ground = ttk.Radiobutton(info_frame, text='Under Ground', variable=view_level, value=game_state.BELOW_GROUND)
+    view_level.set(game_state.ABOVE_GROUND)
+
+    remake_button =ttk.Button(info_frame, text = 'Remake', command = remake)
 
     label.grid(column = 11,row=0)
     above_ground.grid(column = 11, row = 1)
     below_ground.grid(column = 11, row = 2)
 
-    painter = CanvasPainter(canvas, game_map.GameMap())
+
+
+    painter = CanvasPainter(canvas, game_state.GameMap())
     painter.repaint()
 
     root.mainloop()
+
+
+def remake():
+    game_map = game_map.GameMap(50,50)
+
+
+
 
 
 class CanvasPainter(object):
 
 
 
-    def __init__(self, canvas : tk.Canvas, map : game_map.GameMap):
+    def __init__(self, canvas : tk.Canvas, map : game_state.GameMap):
         self.canvas = canvas
-        self.mode = game_map.ABOVE_GROUND
+        self.mode = game_state.ABOVE_GROUND
         self.game_map = map
         #tile_size is both height and width of tiles (they're always square.)
         self.tile_size = 30
@@ -60,7 +71,8 @@ class CanvasPainter(object):
         terr = tile.terrain
         terrain_color = colors.rgbToHex(terrain.NAME_TO_COLOR[terr])
         id = self.canvas.create_rectangle((x_coord, y_coord, self.tile_size, self.tile_size),
-            fill=terrain_color, tags=('palette', 'palettered'))
+            fill=terrain_color, outline = terrain_color)
+
 
     def drawTile(self, tile):
         current_map = self.game_map.map_dict[self.mode]
@@ -69,13 +81,14 @@ class CanvasPainter(object):
         start_tile_x, start_tile_y = self.current_focus
 
         x_coord = (tile.x - start_tile_x) * self.tile_size
-        y_coord = tile.y - start_tile_y * self.tile_size
+        y_coord = (tile.y - start_tile_y) * self.tile_size
 
         self.drawTerrain(tile, x_coord, y_coord)
 
 
     def repaint(self):
         #Checks what map we're currently displaying.
+        self.canvas.delete(tk.ALL)
         current_map = self.game_map.map_dict[self.mode]
         canvas_width = CANVAS_WIDTH
         canvas_height = CANVAS_HEIGHT
