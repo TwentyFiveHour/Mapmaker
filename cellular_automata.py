@@ -8,6 +8,7 @@ ALIVE = "alive"
 
 
 
+NEARBY_TILE_COORDS= [(0,1), (0,-1), (1,1), (1,-1), (1,0), (-1,0), (-1,-1), (-1,1)]
 class CellularAutomataGenerator:
     def __init__(self,  b : list, s : list, initial_map : basic_map.TileMap = basic_map.TileMap(50,50),):
 
@@ -19,34 +20,29 @@ class CellularAutomataGenerator:
         self.clearSimulation(DEAD)
 
 
+
     def run(self, num_turns = 1):
-        """
-        """
+        map = self.initial_map
+        tiles = [ map.tile_grid[x][y] for x in range (0, self.max_x) for y in range(0, self.max_y) ]
         for _ in range(0,num_turns):
-            self.runSimulation()
+            for tile in tiles:
+                nearby_tiles_coords = [(tile.x + dx, tile.y + dy) for (dx,dy) in NEARBY_TILE_COORDS if 0 <= tile.x + dx < map.max_x and 0 <= tile.y + dy < map.max_y]
+                #Note: below works with wrapping, but takes a LOT longer.  Chose to give up wrapping underground.
+                #num_living_tiles = len([self.initial_map.getTile(x,y) for x,y in nearby_tiles_coords
+                #                        if self.initial_map.getTile(x,y)._state == ALIVE])
+                num_living_tiles = len([map.tile_grid[x][y] for x,y in nearby_tiles_coords
+                                if map.tile_grid[x][y]._state == ALIVE ])
 
-    def runSimulation(self):
-        tiles = [ self.initial_map.getTile(x,y) for x in range (0, self.max_x) for y in range(0, self.max_y)]
-        for tile in tiles:
-            if self.getNumLivingNeighbors(tile) in self.s and tile._state == ALIVE:
-                tile._next_state = ALIVE
-            elif self.getNumLivingNeighbors(tile) in self.b and tile._state == DEAD:
-                tile._next_state = ALIVE
-            else:
-                tile._next_state = DEAD
-        for tile in tiles:
-            tile._state = tile._next_state
+                if num_living_tiles in self.s and tile._state == ALIVE:
+                    tile._next_state = ALIVE
+                elif num_living_tiles in self.b and tile._state == DEAD:
+                    tile._next_state = ALIVE
+                else:
+                    tile._next_state = DEAD
+            for tile in tiles:
+                tile._state = tile._next_state
 
 
-
-    def getNumLivingNeighbors(self, tile : basic_map.Tile):
-        nearby_tiles_modifier = [(0,1), (0,-1), (1,1), (1,-1), (1,0), (-1,0), (-1,-1), (-1,1)]
-
-        nearby_tiles_coords = [(tile.x + dx, tile.y + dy) for (dx,dy) in nearby_tiles_modifier]
-
-        num_living_tiles = len([self.initial_map.getTile(*yz) for yz in nearby_tiles_coords
-                        if self.initial_map.getTile(*yz)._state == ALIVE])
-        return num_living_tiles
 
 
     def clearSimulation(self, state : str):
@@ -70,7 +66,7 @@ class CellularAutomataGenerator:
         """
         for x in range(0, self.initial_map.max_x):
             p = ""
-            x_list = self.initial_map.xList[x]
+            x_list = self.initial_map.tile_grid[x]
             for y in x_list:
                 p.join(str(y) + " : ")
             print(p)

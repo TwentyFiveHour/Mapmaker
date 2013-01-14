@@ -38,8 +38,8 @@ WHITTAKER_MAP = {("wet", "cold"): ter.TUNDRA,
 #Terrain generation parameters
 
 PERCENT_WATER = 40
-POLAR_BIAS = 60
-ISLAND_BIAS = -40
+POLAR_BIAS = 80
+ISLAND_BIAS = -20
 ISLANDS_X = 1
 ISLANDS_Y = 1
 #Total islands = islands_x * islands_y
@@ -350,4 +350,4 @@ def getClosestRoute(map : WorldMap, start: basic_map.Tile, goal: basic_map.Tile)
 #14 without
 
 if __name__ == '__main__':
-    cProfile.run('TileMap(200,200)', )
+    cProfile.run('WorldMap(150,150).remake()', )

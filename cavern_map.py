@@ -1,5 +1,6 @@
 import basic_map
 import cellular_automata as ca
+import cProfile
 
 B = [5,6,7,8,9]
 S = [4,5,6,7,8,9]
@@ -15,3 +16,5 @@ class CavernMap( basic_map.TileMap):
 
 
 
+if __name__ == '__main__':
+    cProfile.run('CavernMap(50,50)', )

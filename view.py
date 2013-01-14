@@ -102,7 +102,7 @@ def paintLegend(dictionary : dict, right_bounds : int, spacer: int):
 
 
 def paintMap(tile_map : world_map.WorldMap):
-    tiles= [x[y] for y in range(0,tile_map.max_y) for x in tile_map.xList]
+    tiles= [x[y] for y in range(0,tile_map.max_y) for x in tile_map.tile_grid]
     tile_size = math.floor(min(WINDOWHEIGHT/tile_map.max_y, WINDOWWIDTH/tile_map.max_x))
     for tile in tiles:
         paintTile(tile, tile_size, tile_map)

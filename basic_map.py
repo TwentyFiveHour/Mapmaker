@@ -54,25 +54,25 @@ class TileMap(object):
         self.wrap_x = True
         self.wrap_y = True
         self.IMPASSIBLE_TILE = Tile(ter.IMPASSIBLE, -1, -1)
-        self.xList = []
+        self.tile_grid = []
         for x in range(0, self.max_x):
             yList = []
-            self.xList.append(yList)
+            self.tile_grid.append(yList)
             for y in range(0, self.max_y):
                  yList.append(Tile(ter.WATER, x, y))
 
-
+    #Benchmark: 11.3 with checks.
     def getTile(self, x, y) -> Tile:
-        if (self.wrap_x):
+        if (self.wrap_x and not (0 <= x < self.max_x)):
             x = utils.modu(x, self.max_x)
-        if (self.wrap_y):
+        if (self.wrap_y and not (0 <= y < self.max_y)):
             y = utils.modu(y, self.max_y)
 
         if not (0<=x<self.max_x):
             return self.IMPASSIBLE_TILE
         if not (0<=y<self.max_y):
             return self.IMPASSIBLE_TILE
-        return self.xList[x][y]
+        return self.tile_grid[x][y]
 
 
     def makePropertiedHeightMap(self, the_property, smoothness, bias = None, bias_amplitude = None):
@@ -170,3 +170,5 @@ class TileMap(object):
         return [self.getTile(x,y)
                 for x in range (0, self.max_x)
                 for y in range(0, self.max_y)]
+
+

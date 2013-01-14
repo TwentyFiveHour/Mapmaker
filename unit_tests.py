@@ -7,10 +7,11 @@ import math
 import utils
 import basic_map
 import cellular_automata as ca
-
+import colors
 #Python unit test for graph_tools.py!
 world_map.POLAR_BIAS = 0
 world_map.ISLAND_BIAS = 0 #Don't want them interfering with my measurements.
+
 
 class cellular_automata_test(test.TestCase):
 
