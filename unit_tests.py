@@ -1,5 +1,5 @@
 __author__ = 'Aaron Kaufman'
-import world_map
+import surface_map
 import graph_tools
 import unittest as test
 import perlin_noise
@@ -9,8 +9,8 @@ import basic_map
 import cellular_automata as ca
 import colors
 #Python unit test for graph_tools.py!
-world_map.POLAR_BIAS = 0
-world_map.ISLAND_BIAS = 0 #Don't want them interfering with my measurements.
+surface_map.POLAR_BIAS = 0
+surface_map.ISLAND_BIAS = 0 #Don't want them interfering with my measurements.
 
 
 class cellular_automata_test(test.TestCase):
@@ -111,7 +111,7 @@ class test_world_wrap(test.TestCase):
         self.assertAlmostEqual(gen.interpolate(1.5,0), gen.interpolate(1.5,3))
 
     def test_map_gen(self):
-        map = world_map.WorldMap(80,20)
+        map = surface_map.SurfaceMap(80,20)
         map.wrap_x = True
         map.wrap_y = True
         map.smoothness = 10
@@ -130,7 +130,7 @@ class test_road_builder(test.TestCase):
     def test_complex_a_star_validity(self):
 
         #now:  We need to test our A* algorithm on a more complex route, requiring routing around obstacles.
-        map = world_map.WorldMap(10,10)
+        map = surface_map.SurfaceMap(10,10)
         map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
@@ -150,7 +150,7 @@ class test_road_builder(test.TestCase):
         B2 = map.getTile(0,0)
         A2.city = "A"
         B2.city = "B"
-        astar2 = world_map._AStarNodeMap(map, A2, B2)
+        astar2 = surface_map._AStarNodeMap(map, A2, B2)
         result2 = astar2.getAStarResult()
         self.assertTrue(map.getTile(4,4) in result2)
         self.assertTrue(len(result2) ==14)
@@ -160,7 +160,7 @@ class test_road_builder(test.TestCase):
 
 
     def test_a_star_correctness(self):
-        map = world_map.WorldMap(7,7)
+        map = surface_map.SurfaceMap(7,7)
         map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
@@ -188,7 +188,7 @@ class test_road_builder(test.TestCase):
         B2 = map.getTile(0,0)
         A2.city = "A"
         B2.city = "B"
-        astar2 = world_map._AStarNodeMap(map, A2, B2)
+        astar2 = surface_map._AStarNodeMap(map, A2, B2)
         result2 = astar2.getAStarResult()
         self.assertTrue(map.getTile(4,4) not in result2)
         self.assertTrue(map.getTile(5,2) in result2, [tile.x.__str__() + ", " + tile.y.__str__() for tile in result2])
@@ -200,7 +200,7 @@ class test_road_builder(test.TestCase):
     def test_simple_a_star(self):
         #Now, a test of the AStarNodeMap in the most basic case.
 
-        map = world_map.WorldMap(10,10)
+        map = surface_map.SurfaceMap(10,10)
         map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
@@ -215,7 +215,7 @@ class test_road_builder(test.TestCase):
         map.getTile(2,2).city = "C"
 
 
-        astar = world_map._AStarNodeMap(map, A, B)
+        astar = surface_map._AStarNodeMap(map, A, B)
         result = astar.getAStarResult()
         self.assertTrue(result[0] == B)
         self.assertTrue(result[1].terrain == 'grass')
@@ -225,7 +225,7 @@ class test_road_builder(test.TestCase):
         #FIRST:  Contiguous city tile test.
         #Question asked: Does our algorithm properly determine what cities are connectable in the most basic case?
 
-        map = world_map.WorldMap(4,4)
+        map = surface_map.SurfaceMap(4,4)
         map.clearMap('water')
         map.getTile(0,0).terrain = 'grass'
         map.getTile(0,1).terrain = 'grass'
@@ -239,7 +239,7 @@ class test_road_builder(test.TestCase):
         map.getTile(2,2).terrain = 'grass'
         map.getTile(2,2).city = "C"
 
-        lis = world_map.findJoinableCitySets(map)
+        lis = surface_map.findJoinableCitySets(map)
         num_groups = 0
         while (lis):
             cur = lis.pop()
@@ -253,7 +253,7 @@ class test_road_builder(test.TestCase):
                 num_groups+=1
 
     def test_road_building(self):
-        map = world_map.WorldMap(10,10)
+        map = surface_map.SurfaceMap(10,10)
         map.clearMap('water')
         map.getTile(0,0).city = 'B'
         map.getTile(0,0).terrain = 'grass'

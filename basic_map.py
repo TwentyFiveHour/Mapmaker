@@ -172,3 +172,9 @@ class TileMap(object):
                 for y in range(0, self.max_y)]
 
 
+    def remake(self):
+        """
+        Implicit guarantee that all map implementations have some version of "remake"
+        For compiler hints.
+        """
+        return

@@ -2,14 +2,14 @@ __author__ = 'Aaron Kaufman'
 
 from pygame import *
 from city import City
-import world_map as bmap
+import surface_map as bmap
 import pygame._view
 import pygame.font
 import math
 import terrain
 import sys
 import colors as co
-import world_map
+import surface_map
 import basic_map as bmap
 
 FPS = 15
@@ -50,7 +50,7 @@ class Button(object):
         self.function = function
         self.text = text
 
-    def click(self, chart:world_map.WorldMap):
+    def click(self, chart:surface_map.SurfaceMap):
         self.function(chart)
 
     def containsPoint(self, point:tuple):
@@ -101,7 +101,7 @@ def paintLegend(dictionary : dict, right_bounds : int, spacer: int):
         start_y += 20
 
 
-def paintMap(tile_map : world_map.WorldMap):
+def paintMap(tile_map : surface_map.SurfaceMap):
     tiles= [x[y] for y in range(0,tile_map.max_y) for x in tile_map.tile_grid]
     tile_size = math.floor(min(WINDOWHEIGHT/tile_map.max_y, WINDOWWIDTH/tile_map.max_x))
     for tile in tiles:
@@ -124,7 +124,7 @@ def terminate():
     pygame.quit()
     sys.exit()
 
-def paintTile(tile : bmap.Tile, tile_size : int, map : world_map.WorldMap):
+def paintTile(tile : bmap.Tile, tile_size : int, map : surface_map.SurfaceMap):
     x = tile.x * tile_size
     y = tile.y * tile_size
     tile_rect = pygame.Rect(x, y, tile_size, tile_size)
@@ -143,7 +143,7 @@ def paintTile(tile : bmap.Tile, tile_size : int, map : world_map.WorldMap):
         city_image = pygame.transform.scale(city_image, (tile_size, tile_size))
         DISPLAYSURF.blit(city_image, (x, y))
 
-def drawRoads(tile_rect : pygame.Rect, map: world_map.WorldMap, tile:bmap.Tile):
+def drawRoads(tile_rect : pygame.Rect, map: surface_map.SurfaceMap, tile:bmap.Tile):
     """
     draws the road if there is one.  Extends from current tile to adjacent tiles with roads
     """
@@ -166,7 +166,7 @@ def drawRoads(tile_rect : pygame.Rect, map: world_map.WorldMap, tile:bmap.Tile):
             pygame.draw.line(DISPLAYSURF, co.BROWN, center, midbottom, line_width)
 
 
-def remake(map : world_map.WorldMap):
+def remake(map : surface_map.SurfaceMap):
     map.remake()
 
 #Accepts a RGB tuple, and returns an RGB tuple that's a bit brighter.
@@ -198,7 +198,7 @@ def main():
     global KEYSTOFUNCTION
     KEYSTOFUNCTION = {K_r : remake}
 
-    chart = world_map.WorldMap(50, 50)
+    chart = surface_map.SurfaceMap(50, 50)
 
     tile_size = math.floor(min(WINDOWHEIGHT/chart.max_y, WINDOWWIDTH/chart.max_x))
 
