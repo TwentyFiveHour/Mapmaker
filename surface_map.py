@@ -147,6 +147,7 @@ class SurfaceMap( basic_map.TileMap):
         city_tiles = [choice(land_tiles) for x in range (0,num_cities)]
         for tile in city_tiles:
             tile.city = city.City()
+            tile.road = "road"
 
 
 

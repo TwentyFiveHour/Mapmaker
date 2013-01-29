@@ -37,7 +37,7 @@ class CellularAutomataGenerator:
                 x = tile.x
                 y = tile.y
                 nearby_tiles_coords = []
-                if (0 < x < self.max_x - 1 and 0 < y < self.max_y - 1): #If we're not at a boundary
+                if (0 < x < self.max_x - 1 and 0 < y < self.max_y - 1): #If we're not at a boundary, do cheap computation.
                     nearby_tiles_coords = [(x + dx, y + dy) for (dx,dy) in NEARBY_TILE_COORDS]
                     num_living_tiles = len([map.tile_grid[x][y] for x,y in nearby_tiles_coords
                                             if map.tile_grid[x][y]._state == ALIVE ])

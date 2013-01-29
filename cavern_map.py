@@ -5,7 +5,7 @@ import terrain
 
 B = [5,6,7,8,9]
 S = [4,5,6,7,8,9]
-BASE_WALL_PROBABILITY = .53
+BASE_WALL_PROBABILITY = .5
 
 
 

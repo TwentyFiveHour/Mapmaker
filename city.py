@@ -1,6 +1,20 @@
 __author__ = 'Aaron Kaufman'
+import tkinter
+from tkinter import PhotoImage
+import PIL
+from PIL import Image, ImageTk
+
 
 class City(object):
 
-    def get_pic(self):
-        return 'images/b_rook.png'
+    def __init__(self):
+        self.image = 'images/b_rook.png'
+
+    def get_pic_string(self):
+        return self.image
+
+    def get_image(self, x_size, y_size):
+        image = Image.open("images/b_rook.png")
+        image = image.resize((x_size, y_size), Image.ANTIALIAS)
+        photo = ImageTk.PhotoImage(image)
+        return photo

@@ -43,3 +43,6 @@ def memo(func):
             cache[args] = func(*args)
         return cache[args]
     return wrap
+
+NEARBY_TILE_COORDS_INCLUDING_DIAGONALS= [(0,1), (0,-1), (1,1), (1,-1), (1,0), (-1,0), (-1,-1), (-1,1)]
+NEARBY_TILE_COORDS = [(0,1),(1,0),(-1,0),(0,-1)]

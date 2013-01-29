@@ -7,11 +7,22 @@ import math
 import utils
 import basic_map
 import cellular_automata as ca
+
 import colors
 #Python unit test for graph_tools.py!
 surface_map.POLAR_BIAS = 0
 surface_map.ISLAND_BIAS = 0 #Don't want them interfering with my measurements.
-
+class test_basic_map(test.TestCase):
+    def test_nearby_tiles(self):
+        map = basic_map.TileMap(10,10)
+        map2 = basic_map.TileMap(10,10)
+        tile = map.getTile(3,4)
+        tile.map_transition = map2
+        nearby = map.getNearbyTiles(tile)
+        self.assertTrue(map2.getTile(3,4) in nearby)
+        tile2 = map.getTile(0,0)
+        nearby2 = map2.getNearbyTiles(tile)
+        self.assertTrue(map2.getTile(0,9) in nearby2)
 
 class cellular_automata_test(test.TestCase):
 

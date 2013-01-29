@@ -10,6 +10,7 @@ from tkinter import messagebox
 
 CANVAS_WIDTH = 500
 CANVAS_HEIGHT = 500
+NEARBY_TILES = utils.NEARBY_TILE_COORDS
 
 BOARD_STATE = world_state.WorldState()
 
@@ -93,22 +94,22 @@ class MainFrame(object):
     @repaintAfterOperation
     def down(self, event):
         x,y = self.painter.current_focus
-        self.painter.current_focus = (x, y + 2)
+        self.painter.current_focus = (x, y + math.floor(self.painter.getWindowHeightInTiles()/5))
 
     @repaintAfterOperation
     def up(self, event):
         x,y = self.painter.current_focus
-        self.painter.current_focus = (x, y - 2)
+        self.painter.current_focus = (x, y - math.floor(self.painter.getWindowHeightInTiles()/5))
 
     @repaintAfterOperation
     def left(self, event):
         x,y = self.painter.current_focus
-        self.painter.current_focus = (x - 2, y)
+        self.painter.current_focus = (x - math.floor(self.painter.getWindowHeightInTiles()/5), y)
 
     @repaintAfterOperation
     def right(self, event):
         x,y = self.painter.current_focus
-        self.painter.current_focus = (x + 2, y)
+        self.painter.current_focus = (x + math.floor(self.painter.getWindowHeightInTiles()/5), y)
 
     @repaintAfterOperation
     def setTileSize(self, size):
@@ -117,6 +118,8 @@ class MainFrame(object):
 
 class CanvasPainter(object):
     def __init__(self, canvas : tk.Canvas):
+        self.image_list = [] #This is only here to deal with tkinter photoimage garbage-collection issue.
+        #All created images MUST end up in image_list.
         self.canvas = canvas
         self.mode = world_state.ABOVE_GROUND
         #tile_size is both height and width of tiles (they're always square.)
@@ -125,25 +128,58 @@ class CanvasPainter(object):
         #all other tiles are drawn relative to it.
         self.current_focus = (0,0)
 
+    def getWindowHeightInTiles(self):
+        return math.floor(CANVAS_HEIGHT / self.tile_size)
+
     def drawTerrain(self, tile, x_coord, y_coord):
         terr = tile.terrain
         terrain_color = colors.rgbToHex(terrain.NAME_TO_COLOR[terr])
         id = self.canvas.create_rectangle((x_coord, y_coord, self.tile_size + x_coord, self.tile_size + y_coord),
             fill=terrain_color, outline = "white")
 
+    def drawRoads(self, tile : basic_map.Tile, x_coord, y_coord):
+        has_road = tile.road
+        if has_road is not None:
+            center = x_coord + self.tile_size/2,y_coord + self.tile_size/2
+            top = x_coord + self.tile_size/2, y_coord
+            bot = x_coord + self.tile_size/2, y_coord + self.tile_size
+            right = x_coord + self.tile_size, y_coord + self.tile_size/2
+            left = x_coord, y_coord  + self.tile_size/2
+            x = tile.x
+            y = tile.y
+            map = BOARD_STATE.map_dict[self.mode]
+            if (map.getTile(x,y+1).road is not None):
+                self.canvas.create_line(center, bot, fill = "brown")
+            if (map.getTile(x,y-1).road is not None):
+                self.canvas.create_line(center, top, fill = "brown")
+            if (map.getTile(x+1, y).road is not None):
+                self.canvas.create_line(center, right, fill = "brown")
+            if (map.getTile(x-1,y).road is not None):
+                self.canvas.create_line(center, left, fill = "brown")
+
+        pass
+
+    def drawCity(self, tile : basic_map.Tile, x, y):
+        if tile.city is not None:
+            city_image = tile.city.get_image(self.tile_size, self.tile_size)
+            self.canvas.create_image(x, y, image = city_image, anchor = tk.NW)
+            self.image_list.append(city_image) #Necessary to guard against garbage collection
+        pass
 
     def drawTile(self, tile, x, y):
         current_map = BOARD_STATE.map_dict[self.mode]
 
         x_coord = x * self.tile_size
         y_coord = y * self.tile_size
-
         self.drawTerrain(tile, x_coord, y_coord)
+        self.drawRoads(tile, x_coord, y_coord)
+        self.drawCity(tile, x_coord, y_coord)
+
 
     def repaint(self):
         self.canvas.delete(tk.ALL)
+        self.image_list = []
         current_map = BOARD_STATE.map_dict[self.mode]
-        print("REPAINTING")
 
         canvas_width = CANVAS_WIDTH
         canvas_height = CANVAS_HEIGHT
@@ -155,6 +191,7 @@ class CanvasPainter(object):
                          for y in range(start_tile_y, start_tile_y + num_tiles_y)]
         for tile in tiles_to_draw:
             self.drawTile(*tile)
+
 
 
 if __name__ == '__main__':

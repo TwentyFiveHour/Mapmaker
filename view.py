@@ -139,7 +139,7 @@ def paintTile(tile : bmap.Tile, tile_size : int, map : surface_map.SurfaceMap):
     #Now, draw the city on the tile!  If there is one.
     if (tile.city is not None):
         assert(isinstance(tile.city, City))
-        city_image = pygame.image.load(tile.city.get_pic())
+        city_image = pygame.image.load(tile.city.get_pic_string())
         city_image = pygame.transform.scale(city_image, (tile_size, tile_size))
         DISPLAYSURF.blit(city_image, (x, y))
 

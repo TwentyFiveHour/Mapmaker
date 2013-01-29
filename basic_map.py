@@ -16,13 +16,16 @@ class Tile(object):
         Constructor
         '''
 
-        self.road = None
         self.terrain = terrain
         self.x = x
         self.y = y
         self.height = 0
         self.sort_key = 0
+        self.road = None
         self.city = None
+        self.map_transition = None
+
+
         assert(self.city is city.City or self.city is None)
     def __str__(self):
         if self.city is  not None:
@@ -178,3 +181,17 @@ class TileMap(object):
         For compiler hints.
         """
         return
+
+    def getNearbyTiles(self, tile):
+        """
+        Gets all four tiles near the given tile,
+        plus a seed tile from the map if there are any map transitions.
+        """
+        returned = []
+        if (0 < tile.x < self.max_x - 2 and 0 < tile.y < self.max_y - 2): #check that we're not on boundary
+            returned = [self.tile_grid[x][y] for x,y in utils.NEARBY_TILE_COORDS]
+        else:   # This call is much more expensive.
+            returned = [self.getTile(x,y) for x,y in utils.NEARBY_TILE_COORDS]
+        if (tile.map_transition is not None):
+            returned.append(tile.map_transition.getTile(tile.x,tile.y))
+        return returned
