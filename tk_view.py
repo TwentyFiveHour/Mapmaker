@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import world_state
 import math
-import terrain
+import terrain as ter
 import colors
 import basic_map
 import utils
@@ -12,6 +12,7 @@ CANVAS_WIDTH = 500
 CANVAS_HEIGHT = 500
 NEARBY_TILES = utils.NEARBY_TILE_COORDS
 
+root = tk.Tk()
 BOARD_STATE = world_state.WorldState()
 
 
@@ -23,10 +24,15 @@ def repaintAfterOperation(f):
         return return_val
     return wrapper
 
+
+
 class MainFrame(object):
     def __init__(self):
 
-        root = tk.Tk()
+
+
+
+
         self.root = root
         content = ttk.Frame(root)
         canvas = tk.Canvas(content, borderwidth=5, relief="sunken", width=CANVAS_WIDTH, height=CANVAS_HEIGHT)
@@ -41,12 +47,13 @@ class MainFrame(object):
         painter = CanvasPainter(canvas)
         self.canvas = canvas
         self.painter = painter
+        self.context = ViewContext(map = BOARD_STATE, painter = painter)
         self.content = content
         label = ttk.Label(info_frame, text='Full name:')
         resultsContents = tk.StringVar()
         label['textvariable'] = resultsContents
         resultsContents.set('View Type')
-
+        #View buttons
         view_level = tk.StringVar()
         view_level.set(world_state.ABOVE_GROUND)
         above_ground = ttk.Radiobutton(info_frame, text='Above Ground', variable=view_level, value=world_state.ABOVE_GROUND,
@@ -64,7 +71,18 @@ class MainFrame(object):
                 command = lambda : self.setTileSize(zoom.get()))
             button.grid(column = 11, row = 4 + setting_num)
 
+        #Paint bindings
 
+        self.canvas.bind("<Button-1>", self.context.clickOnCanvas)
+
+        #paint dropdown
+        values = tuple(ter.NAME_TO_COLOR.keys())
+        terrain_selected = tk.StringVar()
+        terrain_selected.set(ter.GRASS) # initial value
+
+        option = tk.OptionMenu(info_frame, terrain_selected, *values)
+        option.grid(column = 11, row = 10)
+        terrain_selected.trace("w",self.context.changeTerrain)
 
         #keybindings for motion
         root.bind("<Up>", self.up)
@@ -128,12 +146,14 @@ class CanvasPainter(object):
         #all other tiles are drawn relative to it.
         self.current_focus = (0,0)
 
+
+
     def getWindowHeightInTiles(self):
         return math.floor(CANVAS_HEIGHT / self.tile_size)
 
     def drawTerrain(self, tile, x_coord, y_coord):
         terr = tile.terrain
-        terrain_color = colors.rgbToHex(terrain.NAME_TO_COLOR[terr])
+        terrain_color = colors.rgbToHex(ter.NAME_TO_COLOR[terr])
         id = self.canvas.create_rectangle((x_coord, y_coord, self.tile_size + x_coord, self.tile_size + y_coord),
             fill=terrain_color, outline = "white")
 
@@ -191,6 +211,45 @@ class CanvasPainter(object):
                          for y in range(start_tile_y, start_tile_y + num_tiles_y)]
         for tile in tiles_to_draw:
             self.drawTile(*tile)
+
+
+
+#Actions list
+PAINT_TERRAIN = 'paint'
+
+
+
+class ViewContext(object):
+    """
+    This class is for collecting mouse events and doing appropriate things with them (as defined by self.action.)
+    Self.action only knows about the tile being collected; the rest of the information is stored in the ViewContext.
+    """
+    def __init__(self, painter : CanvasPainter, map : world_state.WorldState):
+        self.action = self.paintTerrain
+        self.terrain = ter.DESERT
+        self.painter = painter
+        self.map = map
+
+    def changeTerrain(self, name, index, mode):
+        varValue = root.globalgetvar(name)
+        self.terrain = varValue
+
+    def clickOnCanvas(self, event):
+        x,y = event.x, event.y
+        x_tile = math.floor(x / self.painter.tile_size)
+        y_tile = math.floor(y / self.painter.tile_size)
+        dx, dy = self.painter.current_focus
+        x_tile += dx
+        y_tile += dy
+        self.action(x_tile, y_tile)
+
+
+    @repaintAfterOperation
+    def paintTerrain(self, x_tile, y_tile):
+        map = self.map.map_dict[self.painter.mode]
+        map.tile_grid[x_tile][y_tile].terrain = self.terrain
+        pass
+
 
 
 
