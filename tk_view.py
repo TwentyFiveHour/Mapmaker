@@ -53,6 +53,20 @@ class MainFrame(object):
         resultsContents = tk.StringVar()
         label['textvariable'] = resultsContents
         resultsContents.set('View Type')
+
+        # create a toplevel menu
+        menubar = tk.Menu(root)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        filemenu.add_command(label="Open", command=load)
+        filemenu.add_command(label="Save", command=save)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=root.quit)
+        menubar.add_cascade(label="File", menu=filemenu)
+
+        menubar.add_command(label="Quit", command=root.quit)
+        # display the menu
+        root.config(menu=menubar)
+
         #View buttons
         view_level = tk.StringVar()
         view_level.set(world_state.ABOVE_GROUND)
@@ -247,10 +261,28 @@ class ViewContext(object):
     @repaintAfterOperation
     def paintTerrain(self, x_tile, y_tile):
         map = self.map.map_dict[self.painter.mode]
-        map.tile_grid[x_tile][y_tile].terrain = self.terrain
+        map.getTile(x_tile, y_tile).terrain = self.terrain
         pass
 
 
+def load():
+    from tkinter import filedialog
+    import pickle
+
+    options = {}
+    options['defaultextension'] = '.mapg'
+    file = filedialog.askopenfile(mode = 'r', **options) # show an "Open" dialog box and return the path to the selected file
+    world = pickle.load(file)
+    return world
+
+def save():
+    from tkinter import filedialog
+    import pickle
+
+    options = {}
+    options['defaultextension'] = '.mapg'
+    file = pickle.dump(BOARD_STATE)
+    file = filedialog.askopenfile(mode = 'w', **options) # show an "Open" dialog box and return the path to the selected file
 
 
 if __name__ == '__main__':
