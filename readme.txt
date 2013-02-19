@@ -1,2 +1,2 @@
 This is a procedural map generator, written in python and created by Aaron Kaufman.  It supports natural-looking world
-maps of variable size, with or without X and/or Y wrapping.  The main function (with the GUI and so forth) is in view.py.
+maps of variable size, with or without X and/or Y wrapping.  The main function (with the GUI and so forth) is in tk_view.py.
