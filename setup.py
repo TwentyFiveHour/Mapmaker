@@ -11,7 +11,7 @@ if sys.platform == "win32":
     base = "Win32GUI"
 
 setup(  name = "MapMaker",
-    version = "0.1",
+    version = "0.4",
     description = "MapMaker program!",
     options = {"build_exe": build_exe_options},
-    executables = [Executable("view.py", base=base)])
+    executables = [Executable("tk_view.py", base=base)])

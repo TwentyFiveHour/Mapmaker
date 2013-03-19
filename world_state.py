@@ -27,11 +27,3 @@ class WorldState(object):
             map.remake()
             print("BAM")
 
-
-    #Save/load methods
-
-    def saveToDatabase(self, user_name, map_name):
-        serialized_string = pickle.dumps(self)
-        con = sqlite3.connect("world_builder.db")
-        cur = con.cursor()
-

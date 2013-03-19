@@ -1,3 +1,4 @@
+import tkinter
 import tkinter as tk
 from tkinter import ttk
 import world_state
@@ -8,19 +9,17 @@ import basic_map
 import utils
 from tkinter import messagebox
 
-CANVAS_WIDTH = 500
+CANVAS_WIDTH = 900
 CANVAS_HEIGHT = 500
 NEARBY_TILES = utils.NEARBY_TILE_COORDS
-
 root = tk.Tk()
 BOARD_STATE = world_state.WorldState()
-
-
+MAIN_FRAME = None
 
 def repaintAfterOperation(f):
-    def wrapper(self, *args):
-        return_val = f(self, *args)
-        self.painter.repaint()
+    def wrapper(*args):
+        return_val = f(*args)
+        MAIN_FRAME.painter.repaint()
         return return_val
     return wrapper
 
@@ -31,17 +30,17 @@ class MainFrame(object):
 
 
 
-
-
+        global MAIN_FRAME
+        MAIN_FRAME = self
         self.root = root
         content = ttk.Frame(root)
         canvas = tk.Canvas(content, borderwidth=5, relief="sunken", width=CANVAS_WIDTH, height=CANVAS_HEIGHT)
         namelbl = ttk.Label(content, text="Name")
         name = ttk.Entry(content)
         content.grid(column = 0, row = 0)
-        canvas.grid(column = 0, row = 0, columnspan = 10, rowspan = 10)
+        canvas.grid(column = 0, row = 0, columnspan = 15, rowspan = 10)
         info_frame = ttk.Frame(content,borderwidth = 5, width = 200, height = 500)
-        info_frame.grid(column = 11, row = 0, columnspan = 3, rowspan = 9)
+        info_frame.grid(column = 16, row = 0, columnspan = 3, rowspan = 9)
 
         game = world_state.WorldState()
         painter = CanvasPainter(canvas)
@@ -264,16 +263,17 @@ class ViewContext(object):
         map.getTile(x_tile, y_tile).terrain = self.terrain
         pass
 
-
+@repaintAfterOperation
 def load():
     from tkinter import filedialog
     import pickle
 
     options = {}
     options['defaultextension'] = '.mapg'
-    file = filedialog.askopenfile(mode = 'r', **options) # show an "Open" dialog box and return the path to the selected file
-    world = pickle.load(file)
-    return world
+    file = filedialog.askopenfile(mode = 'rb', **options) # show an "Open" dialog box and return the path to the selected file
+    global BOARD_STATE
+    BOARD_STATE = pickle.load(file)
+    return BOARD_STATE
 
 def save():
     from tkinter import filedialog
@@ -281,8 +281,10 @@ def save():
 
     options = {}
     options['defaultextension'] = '.mapg'
-    file = pickle.dump(BOARD_STATE)
-    file = filedialog.askopenfile(mode = 'w', **options) # show an "Open" dialog box and return the path to the selected file
+    fout = tk.filedialog.asksaveasfile(mode='wb', defaultextension=".mapg")
+    blob = pickle.dumps(BOARD_STATE)
+    fout.write(blob)
+    fout.close()
 
 
 if __name__ == '__main__':
