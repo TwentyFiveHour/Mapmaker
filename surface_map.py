@@ -37,7 +37,7 @@ WHITTAKER_MAP = {("wet", "cold"): ter.TUNDRA,
 
 #Terrain generation parameters
 
-PERCENT_WATER = 40
+PERCENT_WATER = 30
 POLAR_BIAS = 80
 ISLAND_BIAS = -20
 ISLANDS_X = 1
@@ -57,6 +57,7 @@ class SurfaceMap( basic_map.TileMap):
         self.islands_x = ISLANDS_X
         self.islands_y = ISLANDS_Y
         self.polar_bias = POLAR_BIAS
+        self.island_bias = ISLAND_BIAS
         self.percent_water = PERCENT_WATER
         #used when we don't have wrapping enabled.
 
@@ -70,9 +71,9 @@ class SurfaceMap( basic_map.TileMap):
         Builds out the map.
         '''
         self.clearMap("water")
-        self.makePropertiedHeightMap("height", smoothness = self.smoothness, bias = islandBiasFunction, bias_amplitude = ISLAND_BIAS)
+        self.makePropertiedHeightMap("height", smoothness = self.smoothness, bias = islandBiasFunction, bias_amplitude = self.island_bias)
         self.performWhitakerAlgorithm()
-        self.fillWithWater(30)
+        self.fillWithWater(self.percent_water)
         self.makeCities(10)
         self.drawRoadsBetweenCities()
 
@@ -91,7 +92,8 @@ class SurfaceMap( basic_map.TileMap):
         """
         Creates maps of temperature and rainfall, and uses those to dictate terrain types.
         """
-        self.makePropertiedHeightMap("temperature", smoothness = self.smoothness, bias = polarBiasFunction, bias_amplitude = POLAR_BIAS)
+        self.makePropertiedHeightMap("temperature", smoothness = self.smoothness,
+                                     bias = polarBiasFunction, bias_amplitude = self.polar_bias)
         self.declareEffectiveProperties("temperature",TEMP_MAP,"temp_string")
         self.makePropertiedHeightMap("rainfall", smoothness = self.smoothness)
         self.declareEffectiveProperties("rainfall",RAIN_MAP,"rain_string")

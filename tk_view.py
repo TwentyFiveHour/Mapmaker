@@ -75,6 +75,35 @@ class MainFrame(object):
         command = lambda : self.select_map(view_level))
 
 
+        #Size entries
+        x_label = tk.Label(info_frame, text=  "Map Width")
+        self.x_size = tk.StringVar()
+        map_size_x_button = ttk.Entry(info_frame, textvariable = self.x_size)
+        self.x_size.set(str(50))
+
+        y_label = tk.Label(info_frame, text=  "Map Height")
+        self.y_size = tk.StringVar()
+        map_size_y_button = ttk.Entry(info_frame, textvariable = self.y_size)
+        self.y_size.set(str(50))
+
+        #Bias entries
+        polar_bias_label = tk.Label(info_frame, text=  "Polar Bias")
+        self.polar_bias = tk.StringVar()
+        polar_bias_entry = ttk.Entry(info_frame, textvariable = self.polar_bias)
+        self.polar_bias.set(str(1))
+
+        island_bias_label = tk.Label(info_frame, text=  "Lake Bias")
+        self.island_bias = tk.StringVar()
+        island_bias_entry = ttk.Entry(info_frame, textvariable = self.island_bias)
+        self.island_bias.set(str(1))
+
+
+        percent_water_label = tk.Label(info_frame, text =  "% Water")
+        self.percent_water = tk.StringVar()
+        percent_water_entry = ttk.Entry(info_frame, textvariable = self.percent_water)
+        self.percent_water.set(str(40))
+
+
         zoom = tk.IntVar()
         zoom.set(15)
 
@@ -109,6 +138,18 @@ class MainFrame(object):
         above_ground.grid(column = 11, row = 1)
         below_ground.grid(column = 11, row = 2)
         remake_button.grid(column = 11, row = 3 )
+        x_label.grid(column = 11, row = 11)
+        map_size_x_button.grid(column = 11, row = 12 )
+        y_label.grid(column = 11, row = 13)
+        map_size_y_button.grid(column = 11, row = 14 )
+        island_bias_label.grid(column = 11, row = 15)
+        island_bias_entry.grid(column = 11, row = 16)
+        polar_bias_label.grid(column = 11, row = 17)
+        polar_bias_entry.grid(column = 11, row = 18)
+        percent_water_label.grid(column = 11, row = 19)
+        percent_water_entry.grid(column = 11, row = 20)
+
+
 
         painter.repaint()
 
@@ -116,7 +157,8 @@ class MainFrame(object):
 
     @repaintAfterOperation
     def restart(self):
-        BOARD_STATE.restart()
+        BOARD_STATE.restart(x = int(self.x_size.get()), y = int(self.y_size.get()), polar_bias = float(self.polar_bias.get()),
+                            island_bias = float(self.island_bias.get()), percent_water = float(self.percent_water.get()))
 
     @repaintAfterOperation
     def select_map(self, var):
