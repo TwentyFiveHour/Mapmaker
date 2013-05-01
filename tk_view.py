@@ -108,22 +108,27 @@ class MainFrame(object):
         zoom.set(15)
 
         zoom_settings = {1: 8,2:10,3:15,4:30}
+
+        zoom_label = ttk.Label(info_frame,text = "Zoom setting:")
+        zoom_label.grid(column=11, row = 4)
         for setting_num in zoom_settings:
             button = ttk.Radiobutton(info_frame, text=setting_num, variable=zoom, value=zoom_settings[setting_num],
                 command = lambda : self.setTileSize(zoom.get()))
-            button.grid(column = 11, row = 4 + setting_num)
+            button.grid(column = 11, row = 5 + setting_num)
 
         #Paint bindings
 
         self.canvas.bind("<Button-1>", self.context.clickOnCanvas)
 
         #paint dropdown
+        paint_label = ttk.Label(info_frame, text = "Paint terrain:")
+        paint_label.grid(column = 11, row = 10)
         values = tuple(ter.NAME_TO_COLOR.keys())
         terrain_selected = tk.StringVar()
         terrain_selected.set(ter.GRASS) # initial value
 
         option = tk.OptionMenu(info_frame, terrain_selected, *values)
-        option.grid(column = 11, row = 10)
+        option.grid(column = 11, row = 11)
         terrain_selected.trace("w",self.context.changeTerrain)
 
         #keybindings for motion
@@ -132,22 +137,22 @@ class MainFrame(object):
         root.bind("<Left>", self.left)
         root.bind("<Right>", self.right)
 
-        remake_button =ttk.Button(info_frame, text = 'Remake', command = self.restart)
+        remake_button =ttk.Button(info_frame, text = 'Create World', command = self.restart)
 
         label.grid(column = 11,row=0)
         above_ground.grid(column = 11, row = 1)
         below_ground.grid(column = 11, row = 2)
         remake_button.grid(column = 11, row = 3 )
-        x_label.grid(column = 11, row = 11)
-        map_size_x_button.grid(column = 11, row = 12 )
-        y_label.grid(column = 11, row = 13)
-        map_size_y_button.grid(column = 11, row = 14 )
-        island_bias_label.grid(column = 11, row = 15)
-        island_bias_entry.grid(column = 11, row = 16)
-        polar_bias_label.grid(column = 11, row = 17)
-        polar_bias_entry.grid(column = 11, row = 18)
-        percent_water_label.grid(column = 11, row = 19)
-        percent_water_entry.grid(column = 11, row = 20)
+        x_label.grid(column = 11, row = 12)
+        map_size_x_button.grid(column = 11, row = 13 )
+        y_label.grid(column = 11, row = 14)
+        map_size_y_button.grid(column = 11, row = 15 )
+        island_bias_label.grid(column = 11, row = 16)
+        island_bias_entry.grid(column = 11, row = 17)
+        polar_bias_label.grid(column = 11, row = 18)
+        polar_bias_entry.grid(column = 11, row = 19)
+        percent_water_label.grid(column = 11, row = 20)
+        percent_water_entry.grid(column = 11, row = 21)
 
 
 
@@ -196,7 +201,7 @@ class CanvasPainter(object):
         self.canvas = canvas
         self.mode = world_state.ABOVE_GROUND
         #tile_size is both height and width of tiles (they're always square.)
-        self.tile_size = 30
+        self.tile_size = 15
         #current_focus represents what the upper-leftmost tile's coordinates are.
         #all other tiles are drawn relative to it.
         self.current_focus = (0,0)

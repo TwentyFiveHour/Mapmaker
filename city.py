@@ -1,7 +1,6 @@
 __author__ = 'Aaron Kaufman'
 import tkinter
 from tkinter import PhotoImage
-import PIL
 from PIL import Image, ImageTk
 
 
